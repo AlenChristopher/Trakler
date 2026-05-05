@@ -1,288 +1,176 @@
-/**
- * Trakler AI Planner - Production Logic
- * Handles State, Drag & Drop (Timeline + Bin), and Chat Interactions
- */
 const App = (function() {
-  
-  // App State
-  const state = {
-    data: JSON.parse(localStorage.getItem("trakler_prod")) || { tasks: [], blocks: [] },
-    currentFilter: 'all',
-    draggedTaskId: null
-  };
-
-  // DOM Elements
-  const DOM = {
-    tasksContainer: document.getElementById('tasks'),
-    timeline: document.getElementById('timeline'),
-    focusArea: document.getElementById('focus-area'),
-    statsArea: document.getElementById('stats-area'),
-    inboxCount: document.getElementById('inbox-count'),
-    chatInput: document.getElementById('chatInput'),
-    chatMessages: document.getElementById('chatMessages'),
-    systemToast: document.getElementById('systemToast'),
-    recycleBin: document.getElementById('recycleBin')
-  };
-
-  let toastTimeout;
-
-  // Utilities
-  const saveState = () => localStorage.setItem("trakler_prod", JSON.stringify(state.data));
-  const sanitize = (str) => { const temp = document.createElement('div'); temp.textContent = str; return temp.innerHTML; };
-
-  const notify = (msg) => {
-    DOM.systemToast.innerText = msg;
-    DOM.systemToast.classList.add('show');
-    clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => DOM.systemToast.classList.remove('show'), 3000);
-  };
-
-  // Render Engine
-  const renderDashboard = () => {
-    const fragment = document.createDocumentFragment();
-    let doneCount = 0;
-
-    state.data.tasks.forEach(t => {
-      if (t.done) doneCount++;
-      if (state.currentFilter === 'focus' && (!t.focus || t.done)) return;
-      if (state.currentFilter === 'completed' && !t.done) return;
-      if (state.currentFilter === 'all' && t.done) return;
-
-      const taskEl = document.createElement('div');
-      taskEl.className = `task ${t.focus ? "focus-task" : ""} ${t.done ? "completed" : ""}`;
-      taskEl.draggable = true;
-      taskEl.dataset.id = t.id;
-
-      taskEl.innerHTML = `
-        <div class="task-content">
-          <input type="checkbox" ${t.done ? "checked" : ""} aria-label="Mark task complete">
-          <span class="task-text">${sanitize(t.text)}</span>
-        </div>
-        <button class="delete-btn icon-btn" aria-label="Delete task">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-        </button>
-      `;
-
-      taskEl.addEventListener('dragstart', (e) => {
-        state.draggedTaskId = t.id;
-        e.dataTransfer.effectAllowed = 'move';
-        document.body.classList.add('is-dragging'); 
-        setTimeout(() => taskEl.classList.add('dragging'), 0);
-      });
-      
-      taskEl.addEventListener('dragend', () => {
-        taskEl.classList.remove('dragging');
-        document.body.classList.remove('is-dragging'); 
-        state.draggedTaskId = null;
-      });
-
-      fragment.appendChild(taskEl);
-    });
-
-    DOM.tasksContainer.innerHTML = '';
-    if (fragment.children.length === 0) {
-      DOM.tasksContainer.innerHTML = `<p class="text-muted" style="text-align: center; margin-top: 40px;">No tasks in this view.</p>`;
-    } else {
-      DOM.tasksContainer.appendChild(fragment);
-    }
-
-    const total = state.data.tasks.length;
-    DOM.inboxCount.innerText = total - doneCount;
-
-    const urgentTasks = state.data.tasks.filter(t => t.focus && !t.done);
-    DOM.focusArea.innerHTML = urgentTasks.length 
-      ? urgentTasks.slice(0, 2).map(t => `<div style="color: #fff; margin-bottom: 4px;">• ${sanitize(t.text)}</div>`).join('')
-      : "No urgent tasks right now. Relax!";
-
-    const percent = total ? Math.round((doneCount / total) * 100) : 0;
-    DOM.statsArea.innerHTML = `
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <span>Total: ${total}</span><span>Completed: ${doneCount}</span>
-      </div>
-      <div style="width: 100%; background: rgba(255,255,255,0.1); border-radius: 10px; height: 8px; overflow: hidden;">
-        <div style="width: ${percent}%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); height: 100%; transition: width 0.5s ease;"></div>
-      </div>
-    `;
-  };
-
-  const renderTimeline = () => {
-    const fragment = document.createDocumentFragment();
-    
-    for (let i = 6; i <= 23; i++) {
-      const slot = document.createElement('div');
-      slot.className = 'time-slot';
-      slot.setAttribute('data-time', i > 12 ? `${i - 12} PM` : (i === 12 ? "12 PM" : `${i} AM`));
-      
-      slot.addEventListener('dragover', (e) => { e.preventDefault(); slot.classList.add('drag-over'); });
-      slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
-      slot.addEventListener('drop', (e) => {
-        e.preventDefault();
-        slot.classList.remove('drag-over');
-        if (!state.draggedTaskId) return;
-
-        state.data.blocks.push({ taskId: state.draggedTaskId, start: i, duration: 1 });
-        notify(`Scheduled for ${slot.getAttribute('data-time')} ⏱`);
-        saveState();
-        renderTimeline();
-      });
-
-      fragment.appendChild(slot);
-    }
-
-    state.data.blocks.forEach((b, index) => {
-      const t = state.data.tasks.find(x => x.id === b.taskId);
-      if (!t) return;
-
-      const block = document.createElement('div');
-      block.className = `block ${t.focus ? "focus" : ""}`;
-      block.style.top = `${(b.start - 6) * 60 + 5}px`;
-      block.style.height = `${(b.duration * 60) - 10}px`;
-      
-      block.innerHTML = `
-        <span>${sanitize(t.text)}</span>
-        <button class="icon-btn remove-block" data-index="${index}" style="color: white; opacity: 0.8;" aria-label="Remove from schedule">&times;</button>
-      `;
-      fragment.appendChild(block);
-    });
-
-    DOM.timeline.innerHTML = '';
-    DOM.timeline.appendChild(fragment);
-  };
-
-  // Controllers
-  const initControllers = () => {
-    // Nav
-    document.querySelectorAll('.nav').forEach(nav => {
-      nav.addEventListener('click', (e) => {
-        document.querySelectorAll('.nav').forEach(n => { n.classList.remove('active'); n.removeAttribute('aria-current'); });
-        e.target.classList.add('active'); e.target.setAttribute('aria-current', 'page');
-
-        document.querySelectorAll('.view-section').forEach(view => view.classList.add('hidden-view', 'active-view'));
-        const targetView = document.getElementById(e.target.dataset.target);
-        targetView.classList.remove('hidden-view');
-        setTimeout(() => targetView.classList.add('active-view'), 10);
-      });
-    });
-
-    // Filters
-    document.querySelectorAll('.tag').forEach(tag => {
-      tag.addEventListener('click', (e) => {
-        document.querySelectorAll('.tag').forEach(t => t.classList.remove('active-tag'));
-        e.currentTarget.classList.add('active-tag');
-        state.currentFilter = e.currentTarget.dataset.filter;
-        renderDashboard();
-      });
-    });
-
-    // Task Interactions
-    DOM.tasksContainer.addEventListener('click', (e) => {
-      const taskEl = e.target.closest('.task');
-      if (!taskEl) return;
-      const taskId = parseInt(taskEl.dataset.id);
-
-      if (e.target.type === 'checkbox') {
-        const task = state.data.tasks.find(t => t.id === taskId);
-        task.done = !task.done;
-        if(task.done) notify("Task complete. Great focus! 🎉");
-        saveState();
-        renderDashboard();
-      }
-
-      if (e.target.closest('.delete-btn')) {
-        state.data.tasks = state.data.tasks.filter(t => t.id !== taskId);
-        state.data.blocks = state.data.blocks.filter(b => b.taskId !== taskId);
-        saveState();
-        renderDashboard();
-        renderTimeline();
-      }
-    });
-
-    // Timeline Block Removal
-    DOM.timeline.addEventListener('click', (e) => {
-      if(e.target.classList.contains('remove-block')) {
-        state.data.blocks.splice(e.target.dataset.index, 1);
-        saveState();
-        renderTimeline();
-      }
-    });
-
-    // Drag to Delete Bin
-    DOM.recycleBin.addEventListener('dragover', (e) => { e.preventDefault(); DOM.recycleBin.classList.add('drag-over'); });
-    DOM.recycleBin.addEventListener('dragleave', () => DOM.recycleBin.classList.remove('drag-over'));
-    DOM.recycleBin.addEventListener('drop', (e) => {
-      e.preventDefault();
-      DOM.recycleBin.classList.remove('drag-over');
-      if (!state.draggedTaskId) return;
-
-      state.data.tasks = state.data.tasks.filter(t => t.id !== state.draggedTaskId);
-      state.data.blocks = state.data.blocks.filter(b => b.taskId !== state.draggedTaskId);
-      
-      DOM.recycleBin.classList.add('deleted-action');
-      setTimeout(() => DOM.recycleBin.classList.remove('deleted-action'), 400);
-
-      notify("Task destroyed. 🗑️");
-      saveState();
-      renderDashboard();
-      renderTimeline();
-    });
-
-    // Chatbot
-    const chatWindow = document.getElementById('chatWindow');
-    const chatFab = document.getElementById('chatFab');
-    
-    chatFab.addEventListener('click', () => {
-      const isOpen = chatWindow.classList.toggle('open');
-      chatFab.setAttribute('aria-expanded', isOpen);
-      if(isOpen) DOM.chatInput.focus();
-    });
-
-    document.getElementById('closeChat').addEventListener('click', () => {
-      chatWindow.classList.remove('open');
-      chatFab.setAttribute('aria-expanded', 'false');
-    });
-
-    const processChatInput = () => {
-      let text = DOM.chatInput.value.trim();
-      if (!text) return;
-
-      const msgEl = document.createElement('div');
-      msgEl.className = 'msg user-msg';
-      msgEl.innerText = text;
-      DOM.chatMessages.appendChild(msgEl);
-      DOM.chatInput.value = "";
-      DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
-
-      const focus = text.startsWith("f:");
-      if (focus) text = text.replace("f:", "").trim();
-
-      state.data.tasks.push({ id: Date.now(), text, focus, done: false });
-      saveState();
-      
-      document.querySelector('.tag[data-filter="all"]').click();
-
-      setTimeout(() => {
-        const replyEl = document.createElement('div');
-        replyEl.className = 'msg ai-msg';
-        replyEl.innerText = focus ? `Got it. I've highlighted "${text}" as top priority. ⚡` : `Added "${text}" to your inbox! ✔️`;
-        DOM.chatMessages.appendChild(replyEl);
-        DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
-      }, 500);
+    const state = {
+        data: JSON.parse(localStorage.getItem("trakler_v2")) || { tasks: [], blocks: [] },
+        currentFilter: 'all',
+        draggedTaskId: null
     };
 
-    document.getElementById('sendTaskBtn').addEventListener('click', processChatInput);
-    DOM.chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') processChatInput(); });
-  };
+    const DOM = {
+        tasks: document.getElementById('tasks'),
+        timeline: document.getElementById('timeline'),
+        inboxCount: document.getElementById('inbox-count'),
+        focusArea: document.getElementById('focus-area'),
+        statsArea: document.getElementById('stats-area'),
+        chatInput: document.getElementById('chatInput'),
+        chatMessages: document.getElementById('chatMessages'),
+        toast: document.getElementById('systemToast')
+    };
 
-  // Init
-  return {
-    init: () => {
-      initControllers();
-      renderDashboard();
-      renderTimeline();
-      setTimeout(() => notify("System online. Welcome to Trakler. 👋"), 800);
-    }
-  };
+    const save = () => localStorage.setItem("trakler_v2", JSON.stringify(state.data));
 
+    const notify = (msg) => {
+        DOM.toast.innerText = msg;
+        DOM.toast.classList.add('show');
+        setTimeout(() => DOM.toast.classList.remove('show'), 3000);
+    };
+
+    const renderTasks = () => {
+        DOM.tasks.innerHTML = '';
+        let count = 0;
+        
+        state.data.tasks.forEach(t => {
+            if (!t.done) count++;
+            if (state.currentFilter === 'focus' && (!t.focus || t.done)) return;
+            if (state.currentFilter === 'completed' && !t.done) return;
+            if (state.currentFilter === 'all' && t.done) return;
+
+            const el = document.createElement('div');
+            el.className = `task ${t.focus ? 'focus-task' : ''} ${t.done ? 'completed' : ''}`;
+            el.draggable = true;
+            el.innerHTML = `
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <input type="checkbox" ${t.done ? 'checked' : ''}>
+                    <span class="task-text">${t.text}</span>
+                </div>
+                <button class="del-btn" style="background:none; border:none; color:#ef4444; cursor:pointer;">✕</button>
+            `;
+
+            el.querySelector('input').onchange = () => {
+                t.done = !t.done;
+                save(); renderTasks(); renderTimeline();
+                if(t.done) notify("Task Finished! ✨");
+            };
+
+            el.querySelector('.del-btn').onclick = () => {
+                state.data.tasks = state.data.tasks.filter(x => x.id !== t.id);
+                state.data.blocks = state.data.blocks.filter(b => b.taskId !== t.id);
+                save(); renderTasks(); renderTimeline();
+            };
+
+            el.ondragstart = (e) => {
+                state.draggedTaskId = t.id;
+                document.body.classList.add('is-dragging');
+            };
+            el.ondragend = () => document.body.classList.remove('is-dragging');
+
+            DOM.tasks.appendChild(el);
+        });
+
+        DOM.inboxCount.innerText = count;
+        const done = state.data.tasks.filter(t => t.done).length;
+        const total = state.data.tasks.length;
+        DOM.statsArea.innerHTML = `<p style="font-size:12px; margin-bottom:5px;">${done}/${total} Completed</p>
+            <div style="height:6px; background:rgba(255,255,255,0.1); border-radius:10px; overflow:hidden;">
+                <div style="width:${(done/total)*100 || 0}%; background:var(--accent-purple); height:100%; transition:0.5s;"></div>
+            </div>`;
+    };
+
+    const renderTimeline = () => {
+        DOM.timeline.innerHTML = '';
+        for (let i = 6; i <= 23; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'time-slot';
+            slot.dataset.time = i > 12 ? `${i-12}PM` : `${i}AM`;
+            
+            const hourBlocks = state.data.blocks.filter(b => b.start === i);
+            hourBlocks.forEach((b, idx) => {
+                const task = state.data.tasks.find(t => t.id === b.taskId);
+                if (!task) return;
+
+                const block = document.createElement('div');
+                block.className = `block ${task.focus ? 'focus' : ''} ${task.done ? 'completed-block' : ''}`;
+                block.style.height = `${(b.duration * 60) - 10}px`;
+                block.innerHTML = `
+                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${task.text}</span>
+                    <div class="duration-controls">
+                        <span onclick="event.stopPropagation(); App.adj(${state.data.blocks.indexOf(b)}, -1)" class="duration-btn">-</span>
+                        <span onclick="event.stopPropagation(); App.adj(${state.data.blocks.indexOf(b)}, 1)" class="duration-btn">+</span>
+                        <span onclick="event.stopPropagation(); App.rem(${state.data.blocks.indexOf(b)})" style="margin-left:5px; cursor:pointer;">&times;</span>
+                    </div>
+                `;
+                slot.appendChild(block);
+            });
+
+            slot.ondragover = (e) => e.preventDefault();
+            slot.ondrop = (e) => {
+                e.preventDefault();
+                if (!state.draggedTaskId) return;
+                state.data.blocks.push({ taskId: state.draggedTaskId, start: i, duration: 1 });
+                save(); renderTimeline();
+            };
+            DOM.timeline.appendChild(slot);
+        }
+    };
+
+    // Global App object for HTML onclicks
+    window.App = {
+        adj: (idx, amt) => {
+            state.data.blocks[idx].duration = Math.max(1, state.data.blocks[idx].duration + amt);
+            save(); renderTimeline();
+        },
+        rem: (idx) => {
+            state.data.blocks.splice(idx, 1);
+            save(); renderTimeline();
+        }
+    };
+
+    // Initialize UI
+    const init = () => {
+        renderTasks(); renderTimeline();
+        
+        // Chat Logic
+        const fab = document.getElementById('chatFab');
+        const win = document.getElementById('chatWindow');
+        fab.onclick = () => win.classList.toggle('open');
+        document.getElementById('closeChat').onclick = () => win.classList.remove('open');
+
+        const sendTask = () => {
+            let val = DOM.chatInput.value.trim();
+            if(!val) return;
+            const focus = val.startsWith('f:');
+            if(focus) val = val.replace('f:', '').trim();
+            
+            state.data.tasks.push({ id: Date.now(), text: val, focus, done: false });
+            save(); renderTasks();
+            DOM.chatInput.value = '';
+            notify("Added to Inbox");
+        };
+
+        document.getElementById('sendTaskBtn').onclick = sendTask;
+        DOM.chatInput.onkeydown = (e) => { if(e.key === 'Enter') sendTask(); };
+
+        // Filter Logic
+        document.querySelectorAll('.tag').forEach(tag => {
+            tag.onclick = () => {
+                document.querySelectorAll('.tag').forEach(t => t.classList.remove('active-tag'));
+                tag.classList.add('active-tag');
+                state.currentFilter = tag.dataset.filter;
+                renderTasks();
+            };
+        });
+
+        // Sidebar Navigation
+        document.querySelectorAll('.nav').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.nav').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden-view'));
+                document.getElementById(btn.dataset.target).classList.remove('hidden-view');
+            };
+        });
+    };
+
+    return { init };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);
