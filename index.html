@@ -1,125 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Trakler AI Planner</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<!-- Mobile Polyfill for HTML5 Drag and Drop -->
-<script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trakler AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="app">
-  <!-- SIDEBAR -->
-  <nav class="sidebar" aria-label="Main Navigation">
-    <div class="logo">✧ Trakler</div>
-
-    <button class="nav active" data-target="view-today" aria-current="page">Today</button>
-    <button class="nav" data-target="view-upcoming">Upcoming</button>
-    <button class="nav" data-target="view-analytics">Analytics</button>
-
-    <div class="section">
-      <p>Categories</p>
-      <button class="tag blue active-tag" data-filter="all">Inbox <span id="inbox-count">0</span></button>
-      <button class="tag orange" data-filter="focus">Priority</button>
-      <button class="tag green" data-filter="completed">Completed</button>
-    </div>
-  </nav>
-
-  <!-- MAIN AREA -->
-  <main class="main">
-    <!-- VIEW: TODAY -->
-    <section id="view-today" class="view-section active-view">
-      <div class="cards">
-        <div class="card stat-card">
-          <h3>Top Priority</h3>
-          <div id="focus-area" class="text-muted">No urgent tasks right now.</div>
+    <nav class="sidebar">
+        <div class="logo">✧ Trakler</div>
+        <button class="nav active" data-target="view-today">Today</button>
+        <button class="nav" data-target="view-upcoming">Upcoming</button>
+        
+        <div class="section">
+            <p>Filters</p>
+            <div class="filter-group">
+                <button class="tag active-tag" data-filter="all">All <span id="inbox-count">0</span></button>
+                <button class="tag" data-filter="focus">Priority</button>
+                <button class="tag" data-filter="completed">Done</button>
+            </div>
         </div>
-        <div class="card stat-card">
-          <h3>Progress</h3>
-          <div id="stats-area" class="text-muted"></div>
+    </nav>
+
+    <main class="main">
+        <section id="view-today" class="view-section active-view">
+            <div class="stats-row">
+                <div class="card stat-card">
+                    <h3>Priority Focus</h3>
+                    <div id="focus-area" class="text-muted">Empty</div>
+                </div>
+                <div class="card stat-card">
+                    <h3>Daily Progress</h3>
+                    <div id="stats-area"></div>
+                </div>
+            </div>
+
+            <div class="card tasks-card">
+                <h3>Inbox</h3>
+                <div id="tasks" class="task-list"></div>
+            </div>
+        </section>
+
+        <section id="view-upcoming" class="view-section hidden-view">
+            <div class="card empty-state"><h2>📅</h2><p>Future sync coming soon.</p></div>
+        </section>
+    </main>
+
+    <aside class="right">
+        <div class="timeline-card">
+            <h3>Timeline</h3>
+            <div id="timeline-container">
+                <div id="timeline"></div>
+            </div>
         </div>
-      </div>
-
-      <div class="card tasks-card">
-        <h3>Your Tasks</h3>
-        <div id="tasks" class="task-list" role="list"></div>
-      </div>
-    </section>
-
-    <!-- VIEW: UPCOMING -->
-    <section id="view-upcoming" class="view-section hidden-view">
-      <div class="card empty-state">
-        <h2>📅</h2>
-        <h3>Upcoming Calendar</h3>
-        <p class="text-muted">Syncing with your external calendars...</p>
-      </div>
-    </section>
-
-    <!-- VIEW: ANALYTICS -->
-    <section id="view-analytics" class="view-section hidden-view">
-      <div class="card empty-state">
-        <h2>📊</h2>
-        <h3>Productivity Analytics</h3>
-        <p class="text-muted">Generating your weekly performance report...</p>
-      </div>
-    </section>
-  </main>
-
-  <!-- TIMELINE -->
-  <aside class="right" aria-label="Daily Schedule">
-    <div class="timeline-card">
-      <h3>Schedule</h3>
-      <p class="text-muted" style="margin-top: -10px; margin-bottom: 16px;">Drag tasks to assign time.</p>
-      <div id="timeline-container">
-        <div id="timeline"></div>
-      </div>
-    </div>
-  </aside>
+    </aside>
 </div>
 
-<!-- SYSTEM TOAST NOTIFICATION -->
-<div class="assistant" id="systemToast" role="status" aria-live="polite">
-  Smarter days begin here. ✨
-</div>
+<div id="recycleBin" class="recycle-bin">🗑️</div>
+<div id="systemToast" class="assistant">System Ready</div>
 
-<!-- DRAG-TO-DELETE RECYCLE BIN -->
-<div id="recycleBin" class="recycle-bin" aria-label="Drop tasks here to delete">
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="3 6 5 6 21 6"></polyline>
-    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-    <line x1="10" y1="11" x2="10" y2="17"></line>
-    <line x1="14" y1="11" x2="14" y2="17"></line>
-  </svg>
-</div>
-
-<!-- INTERACTIVE CHATBOT -->
 <div class="chatbot-container">
-  <!-- Chat Window -->
-  <div class="chat-window" id="chatWindow" aria-hidden="true">
-    <div class="chat-header">
-      <span><span aria-hidden="true" style="margin-right: 8px;">✨</span> Trakler AI</span>
-      <button id="closeChat" class="icon-btn" aria-label="Close chat">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header"><span>✨ Trakler AI</span><button id="closeChat">&times;</button></div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Add task (f: for priority)...">
+            <button id="sendTaskBtn">Send</button>
+        </div>
     </div>
-    <div class="chat-messages" id="chatMessages" role="log" aria-live="polite">
-      <div class="msg ai-msg">Hi! Tell me what you need to do. (Use 'f:' for priority)</div>
-    </div>
-    <div class="chat-input-area">
-      <input type="text" id="chatInput" placeholder="Message Trakler..." autocomplete="off" aria-label="Task input">
-      <button id="sendTaskBtn" class="icon-btn primary-btn" aria-label="Send message">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- Floating Action Button -->
-  <button class="chat-fab" id="chatFab" aria-label="Open Trakler AI Chat" aria-expanded="false" aria-controls="chatWindow">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-  </button>
+    <button class="chat-fab" id="chatFab">💬</button>
 </div>
 
 <script src="script.js"></script>
