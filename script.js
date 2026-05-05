@@ -76,42 +76,59 @@ const App = (function() {
     };
 
     const renderTimeline = () => {
-        DOM.timeline.innerHTML = '';
-        for (let i = 6; i <= 23; i++) {
-            const slot = document.createElement('div');
-            slot.className = 'time-slot';
-            slot.dataset.time = i > 12 ? `${i-12}PM` : `${i}AM`;
+    DOM.timeline.innerHTML = '';
+    // Create slots from 6 AM to 11 PM
+    for (let i = 6; i <= 23; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'time-slot';
+        // Format the time label
+        const timeLabel = i > 12 ? `${i - 12} PM` : (i === 12 ? "12 PM" : `${i} AM`);
+        slot.setAttribute('data-time', timeLabel);
+        
+        // Find tasks scheduled for THIS specific hour
+        const hourBlocks = state.data.blocks.filter(b => b.start === i);
+        
+        hourBlocks.forEach((b) => {
+            const task = state.data.tasks.find(t => t.id === b.taskId);
+            if (!task) return;
+
+            const block = document.createElement('div');
+            // Check if task is done to apply strike-through style
+            block.className = `block ${task.focus ? 'focus' :Short} ${task.done ? 'completed-block' : ''}`;
             
-            const hourBlocks = state.data.blocks.filter(b => b.start === i);
-            hourBlocks.forEach((b, idx) => {
-                const task = state.data.tasks.find(t => t.id === b.taskId);
-                if (!task) return;
+            // Set height based on duration (1 hour = 60px minus margins)
+            block.style.height = `${(b.duration * 60) - 10}px`;
+            block.style.minHeight = "50px"; // Ensure it's visible
 
-                const block = document.createElement('div');
-                block.className = `block ${task.focus ? 'focus' : ''} ${task.done ? 'completed-block' : ''}`;
-                block.style.height = `${(b.duration * 60) - 10}px`;
-                block.innerHTML = `
-                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${task.text}</span>
-                    <div class="duration-controls">
-                        <span onclick="event.stopPropagation(); App.adj(${state.data.blocks.indexOf(b)}, -1)" class="duration-btn">-</span>
-                        <span onclick="event.stopPropagation(); App.adj(${state.data.blocks.indexOf(b)}, 1)" class="duration-btn">+</span>
-                        <span onclick="event.stopPropagation(); App.rem(${state.data.blocks.indexOf(b)})" style="margin-left:5px; cursor:pointer;">&times;</span>
-                    </div>
-                `;
-                slot.appendChild(block);
-            });
+            block.innerHTML = `
+                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${task.text}</span>
+                <div class="duration-controls">
+                    <span onclick="event.stopPropagation(); App.adj(${state.data.blocks.indexOf(b)}, -1)" class="duration-btn">-</span>
+                    <span onclick="event.stopPropagation(); App.adj(${state.data.blocks.indexOf(b)}, 1)" class="duration-btn">+</span>
+                    <span onclick="event.stopPropagation(); App.rem(${state.data.blocks.indexOf(b)})" style="margin-left:5px; cursor:pointer;">&times;</span>
+                </div>
+            `;
+            slot.appendChild(block); // This places the block INSIDE the hour row
+        });
 
-            slot.ondragover = (e) => e.preventDefault();
-            slot.ondrop = (e) => {
-                e.preventDefault();
-                if (!state.draggedTaskId) return;
+        // Drop logic
+        slot.ondragover = (e) => e.preventDefault();
+        slot.ondrop = (e) => {
+            e.preventDefault();
+            if (!state.draggedTaskId) return;
+            
+            // Prevent duplicate drops of the same task in the same hour
+            const exists = state.data.blocks.find(b => b.taskId === state.draggedTaskId && b.start === i);
+            if(!exists) {
                 state.data.blocks.push({ taskId: state.draggedTaskId, start: i, duration: 1 });
-                save(); renderTimeline();
-            };
-            DOM.timeline.appendChild(slot);
-        }
-    };
-
+                save();
+                renderTimeline();
+                notify(`Scheduled for ${timeLabel}`);
+            }
+        };
+        DOM.timeline.appendChild(slot);
+    }
+};
     // Global App object for HTML onclicks
     window.App = {
         adj: (idx, amt) => {
