@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trakler AI</title>
+    <title>Trackler AI</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -12,14 +12,28 @@
 
 <div class="app">
     <nav class="sidebar">
-        <div class="logo">✧ Trakler</div>
+        <div class="logo-container">
+            <img src="Trackler.png" alt="Trackler" class="app-logo">
+            <span class="logo-text">Trackler</span>
+        </div>
+
+        <div class="clock-container">
+            <div class="analog-clock">
+                <div class="hand hour" id="hour-hand"></div>
+                <div class="hand minute" id="minute-hand"></div>
+                <div class="hand second" id="second-hand"></div>
+                <div class="center-dot"></div>
+            </div>
+            <div id="digital-time" class="digital-time">00:00:00</div>
+        </div>
+
         <button class="nav active" data-target="view-today">Today</button>
         <button class="nav" data-target="view-upcoming">Upcoming</button>
         
         <div class="section">
-            <p>Filters</p>
+            <p class="section-label">Categories</p>
             <div class="filter-group">
-                <button class="tag active-tag" data-filter="all">All <span id="inbox-count">0</span></button>
+                <button class="tag active-tag" data-filter="all">Inbox <span id="inbox-count">0</span></button>
                 <button class="tag" data-filter="focus">Priority</button>
                 <button class="tag" data-filter="completed">Done</button>
             </div>
@@ -30,17 +44,17 @@
         <section id="view-today" class="view-section active-view">
             <div class="stats-row">
                 <div class="card stat-card">
-                    <h3>Priority Focus</h3>
-                    <div id="focus-area" class="text-muted">Empty</div>
+                    <h3>Focus</h3>
+                    <div id="focus-area" class="text-muted">High Priority</div>
                 </div>
                 <div class="card stat-card">
-                    <h3>Daily Progress</h3>
+                    <h3>Progress</h3>
                     <div id="stats-area"></div>
                 </div>
             </div>
 
             <div class="card tasks-card">
-                <h3>Inbox</h3>
+                <h3>Your Tasks</h3>
                 <div id="tasks" class="task-list"></div>
             </div>
         </section>
@@ -60,12 +74,11 @@
     </aside>
 </div>
 
-<div id="recycleBin" class="recycle-bin">🗑️</div>
-<div id="systemToast" class="assistant">System Ready</div>
+<div id="systemToast" class="assistant">Ready</div>
 
 <div class="chatbot-container">
     <div class="chat-window" id="chatWindow">
-        <div class="chat-header"><span>✨ Trakler AI</span><button id="closeChat">&times;</button></div>
+        <div class="chat-header"><span>✨ Trackler AI</span><button id="closeChat">&times;</button></div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-area">
             <input type="text" id="chatInput" placeholder="Add task (f: for priority)...">
