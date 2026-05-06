@@ -27,6 +27,7 @@
             <div id="digital-time" class="digital-time">00:00:00</div>
         </div>
 
+        <!-- Updated Nav Buttons to match style.css .nav class -->
         <button class="nav active" data-target="view-today">Today</button>
         <button class="nav" data-target="view-upcoming">Upcoming</button>
         
@@ -45,10 +46,12 @@
             <div class="stats-row">
                 <div class="card stat-card">
                     <h3>Focus</h3>
+                    <!-- ID focus-area used by script.js to show top priority task -->
                     <div id="focus-area" class="text-muted">High Priority</div>
                 </div>
                 <div class="card stat-card">
                     <h3>Progress</h3>
+                    <!-- ID stats-area used by script.js to render progress bar -->
                     <div id="stats-area"></div>
                 </div>
             </div>
@@ -60,6 +63,7 @@
         </section>
 
         <section id="view-upcoming" class="view-section hidden-view">
+            <!-- Ensure empty state is ONLY in upcoming view -->
             <div class="card empty-state"><h2>📅</h2><p>Future sync coming soon.</p></div>
         </section>
     </main>
@@ -74,14 +78,24 @@
     </aside>
 </div>
 
+<!-- Feedback Toast -->
 <div id="systemToast" class="assistant">Ready</div>
 
+<!-- IMPROVED CHATBOT: Better hierarchy for "Lively" Floating logic -->
 <div class="chatbot-container">
     <div class="chat-window" id="chatWindow">
-        <div class="chat-header"><span>✨ Trackler AI</span><button id="closeChat">&times;</button></div>
+        <div class="chat-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span class="bot-status-dot"></span>
+                <span>Trackler AI</span>
+            </div>
+            <!-- Standard Close replaced with a styled button in script.js -->
+            <button id="closeChat" class="custom-close-btn">&times;</button>
+        </div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-area">
-            <input type="text" id="chatInput" placeholder="Add task (f: for priority)...">
+            <!-- Placeholder updated to reflect Smart Scheduling features -->
+            <input type="text" id="chatInput" placeholder="Try 'Meeting @12:00'...">
             <button id="sendTaskBtn">Send</button>
         </div>
     </div>
