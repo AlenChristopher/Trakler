@@ -1,28 +1,137 @@
-:root { --bg-black: #050507; --glass: rgba(255, 255, 255, 0.04); --accent: #9333ea; --border: rgba(255, 255, 255, 0.08); }
-body { margin: 0; font-family: 'Inter', sans-serif; background: radial-gradient(circle at top, #1a1a2e, var(--bg-black)); color: #fff; height: 100vh; overflow: hidden; }
+const App = (function() {
+    const state = { 
+        data: JSON.parse(localStorage.getItem("trackler_final_v1")) || { tasks: [], blocks: [] } 
+    };
 
-/* LAYOUT ENGINE */
-.app { display: grid; grid-template-columns: 280px 1fr 380px; height: 100vh; gap: 20px; padding: 20px; box-sizing: border-box; }
+    const save = () => {
+        localStorage.setItem("trackler_final_v1", JSON.stringify(state.data));
+        render();
+    };
 
-/* PROACTIVE FLOATING BUTTON */
-.chatbot-wrapper { position: fixed; bottom: 30px; right: 30px; z-index: 10000; }
-.chat-fab { width: 65px; height: 65px; border-radius: 50%; background: var(--accent); border: none; font-size: 28px; cursor: pointer; box-shadow: 0 10px 40px rgba(147, 51, 234, 0.4); }
-.pulse { animation: pulse-shadow 2s infinite; }
-@keyframes pulse-shadow { 0% { box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(147, 51, 234, 0); } 100% { box-shadow: 0 0 0 0 rgba(147, 51, 234, 0); } }
+    const render = () => {
+        const tasks = document.getElementById('tasks');
+        const stats = document.getElementById('stats-area');
+        const bar = document.getElementById('progress-fill');
+        const focus = document.getElementById('focus-area');
+        const timeline = document.getElementById('timeline');
 
-/* ANALYTICS MODAL */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 10001; backdrop-filter: blur(10px); }
-.modal-overlay.open { display: flex; }
-.modal-card { background: #0f0f18; width: 450px; padding: 40px; border-radius: 30px; border: 1px solid var(--border); text-align: center; }
-.bar-bg { height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; margin-top: 30px; overflow: hidden; }
-.bar-fill { height: 100%; background: var(--accent); width: 0%; transition: width 1s ease-in-out; }
+        if (!tasks) return;
+        tasks.innerHTML = '';
+        let done = 0;
+        let topFocus = "No urgent tasks";
 
-/* FLUID TIMELINE */
-#timeline-container { position: relative; height: 100%; overflow-y: auto; background: var(--glass); border-radius: 24px; padding-left: 60px; border: 1px solid var(--border); }
-#timeline { position: relative; height: 1680px; }
-.time-slot { height: 70px; border-bottom: 1px solid rgba(255,255,255,0.03); position: relative; }
-.time-slot::before { content: attr(data-time); position: absolute; left: -50px; top: -10px; font-size: 11px; color: #555; font-weight: 600; }
-.block { position: absolute; left: 5px; right: 10px; background: linear-gradient(135deg, #4f46e5, var(--accent)); border-radius: 12px; padding: 12px; font-size: 12px; font-weight: 700; cursor: move; }
+        state.data.tasks.forEach(t => {
+            if (t.done) done++;
+            if (t.urgent && !t.done) topFocus = t.text;
 
-/* MOBILE RESPONSIVITY */
-@media (max-width: 1024px) { .app { display: flex; flex-direction: column; overflow-y: auto; } .right-panel { height: 500px; } }
+            const card = document.createElement('div');
+            card.className = `task-card ${t.urgent ? 'urgent-mode' : ''}`;
+            card.innerHTML = `
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="App.toggleTask(${t.id})" style="transform:scale(1.4); accent-color:#9333ea;">
+                    <span style="${t.done ? 'text-decoration:line-through; opacity:0.5' : ''}">${t.text}</span>
+                </div>
+                <button onclick="App.deleteTask(${t.id})" style="background:none; border:none; color:#ff4d4d; font-size:22px; cursor:pointer;">&times;</button>
+            `;
+            tasks.appendChild(card);
+        });
+
+        // Update Progress
+        const pct = state.data.tasks.length > 0 ? Math.round((done / state.data.tasks.length) * 100) : 0;
+        if (stats) stats.innerText = `${pct}%`;
+        if (bar) bar.style.width = `${pct}%`;
+        if (focus) focus.innerText = topFocus;
+
+        // Render Timeline Grid
+        if (timeline) {
+            timeline.innerHTML = '';
+            for(let i=6; i<=22; i++) {
+                const slot = document.createElement('div');
+                slot.style = "height:70px; border-bottom:1px solid rgba(255,255,255,0.02); position:relative;";
+                slot.innerHTML = `<span style="position:absolute; left:-50px; top:-10px; font-size:11px; color:#555;">${i}:00</span>`;
+                timeline.appendChild(slot);
+            }
+            state.data.blocks.forEach(b => {
+                const task = state.data.tasks.find(x => x.id === b.taskId);
+                if (task) {
+                    const block = document.createElement('div');
+                    block.style = `position:absolute; top:${(b.start-6)*70}px; left:0; right:0; background:linear-gradient(90deg, #6366f1, #9333ea); border-radius:12px; padding:15px; font-size:12px; font-weight:600; z-index:10;`;
+                    block.innerText = task.text;
+                    timeline.appendChild(block);
+                }
+            });
+        }
+    };
+
+    const processMessage = (val) => {
+        const str = val.toLowerCase();
+        let urgent = /urgent|asap|priority/i.test(str);
+        let time = null;
+        
+        const timeMatch = str.match(/at\s*(\d+)|@(\d+)|(\d+)\s*(pm|am)/);
+        if (timeMatch) {
+            let hr = parseInt(timeMatch[1] || timeMatch[2] || timeMatch[3]);
+            if (str.includes('pm') && hr < 12) hr += 12;
+            time = hr;
+        }
+
+        // Clean text: strip out the "urgent" and time keywords
+        let cleanText = val.replace(/urgent|asap|priority|at\s*\d+|@\d+|\d+\s*(pm|am)/gi, '').trim();
+        return { cleanText, time, urgent };
+    };
+
+    window.App = {
+        toggleChat: () => document.getElementById('chatWindow').classList.toggle('open'),
+        toggleTask: (id) => {
+            const t = state.data.tasks.find(x => x.id === id);
+            if (t) t.done = !t.done;
+            save();
+        },
+        deleteTask: (id) => {
+            state.data.tasks = state.data.tasks.filter(x => x.id !== id);
+            state.data.blocks = state.data.blocks.filter(b => b.taskId !== id);
+            save();
+        },
+        sendMessage: () => {
+            const inp = document.getElementById('chatInput');
+            if (!inp.value) return;
+
+            const userMsg = document.createElement('div');
+            userMsg.className = 'msg user';
+            userMsg.innerText = inp.value;
+            document.getElementById('chatMessages').appendChild(userMsg);
+
+            const { cleanText, time, urgent } = processMessage(inp.value);
+            const id = Date.now();
+            state.data.tasks.push({ id, text: cleanText, done: false, urgent });
+            if (time) state.data.blocks.push({ taskId: id, start: time });
+
+            setTimeout(() => {
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'msg ai';
+                aiMsg.innerText = `Added "${cleanText}" ${urgent ? '(Urgent)' : ''} ${time ? 'at ' + time + ':00' : ''}.`;
+                document.getElementById('chatMessages').appendChild(aiMsg);
+                document.getElementById('chatMessages').scrollTop = 9999;
+            }, 600);
+
+            save();
+            inp.value = '';
+        }
+    };
+
+    return {
+        init: () => {
+            render();
+            setInterval(() => {
+                const n = new Date();
+                document.getElementById('second-hand').style.transform = `translateX(-50%) rotate(${n.getSeconds()*6}deg)`;
+                document.getElementById('minute-hand').style.transform = `translateX(-50%) rotate(${n.getMinutes()*6}deg)`;
+                document.getElementById('hour-hand').style.transform = `translateX(-50%) rotate(${n.getHours()*30 + n.getMinutes()*0.5}deg)`;
+                document.getElementById('digital-time').innerText = n.toLocaleTimeString();
+            }, 1000);
+            document.getElementById('sendBtn').onclick = App.sendMessage;
+        }
+    };
+})();
+
+document.addEventListener('DOMContentLoaded', App.init);
