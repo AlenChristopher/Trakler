@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Trackler AI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -12,11 +12,13 @@
 
 <div class="app">
     <nav class="sidebar">
+        <!-- Logo and Name back in the Top Left -->
         <div class="logo-container">
             <img src="Trackler.png" alt="Trackler" class="app-logo">
             <span class="logo-text">Trackler</span>
         </div>
 
+        <!-- Clock back in its perfect place -->
         <div class="clock-container">
             <div class="analog-clock">
                 <div class="hand hour" id="hour-hand"></div>
@@ -27,7 +29,7 @@
             <div id="digital-time" class="digital-time">00:00:00</div>
         </div>
 
-        <div class="nav-group">
+        <div class="nav-links">
             <button class="nav active" data-target="view-today">Today</button>
             <button class="nav" data-target="view-upcoming">Upcoming</button>
         </div>
@@ -47,11 +49,11 @@
             <div class="stats-row">
                 <div class="card stat-card">
                     <h3>Focus</h3>
-                    <div id="focus-area" class="text-muted">High Priority</div>
+                    <div id="focus-area" class="text-muted">No High Priority</div>
                 </div>
                 <div class="card stat-card">
                     <h3>Progress</h3>
-                    <div id="stats-area"></div>
+                    <div id="stats-area"></div> <!-- Progress Ring renders here -->
                 </div>
             </div>
 
@@ -76,6 +78,7 @@
     </aside>
 </div>
 
+<!-- Floating Chatbot remains fixed -->
 <div class="chatbot-container">
     <div class="chat-window" id="chatWindow">
         <div class="chat-header">
@@ -87,7 +90,7 @@
         </div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-area">
-            <input type="text" id="chatInput" placeholder="Meeting @12:00 urgent...">
+            <input type="text" id="chatInput" placeholder="Try 'Meeting @12:00'...">
             <button id="sendTaskBtn">Send</button>
         </div>
     </div>
