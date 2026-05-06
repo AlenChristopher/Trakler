@@ -21,9 +21,18 @@ body {
     height: 100vh; gap: 20px; padding: 20px; box-sizing: border-box;
 }
 
-/* --- BRANDING & CLOCK --- */
+/* --- BRANDING & CLOCK FIXES --- */
 .logo-container { display: flex; align-items: center; gap: 12px; margin-bottom: 25px; }
-.app-logo { width: 32px; height: 32px; border-radius: 8px; box-shadow: 0 0 15px rgba(147, 51, 234, 0.3); }
+
+/* FIX: Moved outside of media query so it works on all screens */
+.app-logo {
+    width: 42px !important; 
+    height: 42px !important;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(147, 51, 234, 0.3);
+}
+
 .logo-text { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; }
 
 .clock-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 25px; }
@@ -31,10 +40,22 @@ body {
     width: 80px; height: 80px; border: 2px solid var(--card-border); 
     border-radius: 50%; position: relative; background: rgba(255,255,255,0.02); 
 }
-.hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; border-radius: 4px; transform: translateX(-50%); }
+
+/* FIX: Added transition and moved outside media query */
+.hand { 
+    position: absolute; 
+    bottom: 50%; 
+    left: 50%; 
+    transform-origin: bottom; 
+    border-radius: 4px; 
+    transform: translateX(-50%); 
+    transition: transform 0.5s cubic-bezier(0.4, 2.08, 0.55, 0.44); 
+}
+
 .hour { width: 3px; height: 20px; background: #fff; }
 .minute { width: 2px; height: 30px; background: var(--text-muted); }
 .second { width: 1px; height: 35px; background: var(--accent-purple); }
+
 .center-dot { width: 4px; height: 4px; background: var(--accent-purple); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .digital-time { margin-top: 10px; font-size: 12px; font-family: monospace; color: var(--accent-purple); }
 
@@ -64,34 +85,18 @@ body {
 .tag { background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); padding: 10px; border-radius: 12px; font-size: 13px; color: var(--text-muted); cursor: pointer; width: 100%; text-align: left; margin-bottom: 8px; }
 .tag.active-tag { background: var(--accent-purple); color: #fff; border-color: transparent; }
 
-/* --- CHAT UI --- */
-.chat-fab { position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px; border-radius: 50%; background: var(--accent-purple); color: white; border: none; cursor: pointer; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-.chat-window { position: fixed; bottom: 85px; right: 20px; width: 300px; height: 400px; background: #0f172a; border-radius: 15px; display: none; flex-direction: column; border: 1px solid var(--card-border); z-index: 1000; }
+/* --- CHAT UI FIX --- */
+.chat-fab { position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px; border-radius: 50%; background: var(--accent-purple); color: white; border: none; cursor: pointer; z-index: 9999; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+.chat-window { position: fixed; bottom: 85px; right: 20px; width: 300px; height: 400px; background: #0f172a; border-radius: 15px; display: none; flex-direction: column; border: 1px solid var(--card-border); z-index: 9999; }
 .chat-window.open { display: flex; }
 
-.assistant { position: fixed; bottom: 20px; left: 20px; background: #1e293b; padding: 10px 15px; border-radius: 10px; border: 1px solid var(--card-border); opacity: 0; transition: 0.3s; pointer-events: none; }
+.assistant { position: fixed; bottom: 20px; left: 20px; background: #1e293b; padding: 10px 15px; border-radius: 10px; border: 1px solid var(--card-border); opacity: 0; transition: 0.3s; pointer-events: none; z-index: 9999;}
 .assistant.show { opacity: 1; }
 
 @media (max-width: 900px) {
     .app { grid-template-columns: 1fr; height: auto; }
     .right { height: 500px; padding-left: 15px; margin-top: 20px;}
     .sidebar { display: flex; flex-direction: column; align-items: center; }
-    .filter-group { flex-direction: row; flex-wrap: wrap; }
+    .filter-group { flex-direction: row; flex-wrap: wrap; justify-content: center; }
     .tag { width: auto; }
-    /* Force the logo to stay small */
-.app-logo {
-    width: 40px !important; /* Adjust this to your liking */
-    height: 40px !important;
-    object-fit: contain;
-    border-radius: 8px;
-}
-
-/* Ensure the clock hands are visible and centered */
-.hand {
-    position: absolute;
-    bottom: 50%;
-    left: 50%;
-    transform-origin: bottom;
-    transition: transform 0.5s cubic-bezier(0.4, 2.08, 0.55, 0.44); /* Smooth tick */
-}
 }
