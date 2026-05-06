@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trackler AI | Proactive OS</title>
+    <title>Trackler AI</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <!-- Touch support for dragging on mobile -->
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="app">
-    <!-- Sidebar: Branding & Navigation -->
     <nav class="sidebar">
         <div class="logo-container">
             <img src="Trackler.png" alt="Trackler" class="app-logo">
@@ -29,8 +27,10 @@
             <div id="digital-time" class="digital-time">00:00:00</div>
         </div>
 
-        <button class="nav active" data-target="view-today">Today</button>
-        <button class="nav" data-target="view-upcoming">Upcoming</button>
+        <div class="nav-group">
+            <button class="nav active" data-target="view-today">Today</button>
+            <button class="nav" data-target="view-upcoming">Upcoming</button>
+        </div>
         
         <div class="section">
             <p class="section-label">Categories</p>
@@ -42,18 +42,15 @@
         </div>
     </nav>
 
-    <!-- Main Content: Task Management & Stats -->
     <main class="main">
         <section id="view-today" class="view-section active-view">
             <div class="stats-row">
                 <div class="card stat-card">
                     <h3>Focus</h3>
-                    <!-- Proactively updated by JS based on priority keywords -->
-                    <div id="focus-area" class="focus-text-glow">Focus Mode: Off</div>
+                    <div id="focus-area" class="text-muted">High Priority</div>
                 </div>
                 <div class="card stat-card">
                     <h3>Progress</h3>
-                    <!-- Dynamically renders the Circular Progress Ring -->
                     <div id="stats-area"></div>
                 </div>
             </div>
@@ -65,20 +62,13 @@
         </section>
 
         <section id="view-upcoming" class="view-section hidden-view">
-            <div class="card empty-state">
-                <h2>📅</h2>
-                <p>Future sync coming soon.</p>
-            </div>
+            <div class="card empty-state"><h2>📅</h2><p>Future sync coming soon.</p></div>
         </section>
     </main>
 
-    <!-- Right Column: Interactive Timeline -->
     <aside class="right">
         <div class="timeline-card">
-            <div class="timeline-header">
-                <h3>Timeline</h3>
-                <span id="date-label" class="text-muted">Today</span>
-            </div>
+            <h3>Timeline</h3>
             <div id="timeline-container">
                 <div id="timeline"></div>
             </div>
@@ -86,28 +76,22 @@
     </aside>
 </div>
 
-<!-- Proactive Notification System: Hidden until needed -->
-<div id="systemToast" class="modern-toast">Ready</div>
-
-<!-- IMPROVED CHATBOT: High-Z-index Floating Layer -->
 <div class="chatbot-container">
     <div class="chat-window" id="chatWindow">
         <div class="chat-header">
             <div style="display:flex; align-items:center; gap:8px;">
                 <span class="bot-status-dot"></span>
-                <span style="font-weight:700;">Trackler AI</span>
+                <span>Trackler AI</span>
             </div>
             <button id="closeChat" class="modern-close">&times;</button>
         </div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-area">
-            <input type="text" id="chatInput" placeholder="Meeting @14 urgent...">
+            <input type="text" id="chatInput" placeholder="Meeting @12:00 urgent...">
             <button id="sendTaskBtn">Send</button>
         </div>
     </div>
-    <button class="chat-fab" id="chatFab">
-        <span class="fab-icon">💬</span>
-    </button>
+    <button class="chat-fab" id="chatFab">💬</button>
 </div>
 
 <script src="script.js"></script>
