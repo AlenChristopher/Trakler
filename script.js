@@ -71,7 +71,7 @@ const App = (function() {
         if(!DOM.timeline) return;
         DOM.timeline.innerHTML = '';
         
-        // 1. Render Hour Slots (The Background Grid)
+        // 1. Render Hour Slots
         for (let i = 6; i <= 23; i++) {
             const slot = document.createElement('div');
             slot.className = 'time-slot';
@@ -82,10 +82,8 @@ const App = (function() {
             slot.ondrop = (e) => {
                 e.preventDefault();
                 if (state.movingBlockIndex !== null) {
-                    // Re-scheduling an existing block
                     state.data.blocks[state.movingBlockIndex].start = i;
                 } else if (state.draggedTaskId) {
-                    // Adding a new task to timeline
                     state.data.blocks.push({ taskId: state.draggedTaskId, start: i, duration: 1 });
                 }
                 save(); renderTimeline();
@@ -93,12 +91,11 @@ const App = (function() {
             DOM.timeline.appendChild(slot);
         }
 
-        // 2. Render Floating Blocks (Google Calendar Style)
+        // 2. Render Floating Blocks
         state.data.blocks.forEach((b, idx) => {
             const task = state.data.tasks.find(t => t.id === b.taskId);
             if (!task) return;
 
-            // Detect Overlaps for side-by-side layout
             const othersInSameHour = state.data.blocks.filter(other => other.start === b.start);
             const overlapIndex = othersInSameHour.indexOf(b);
             const overlapClass = othersInSameHour.length > 1 ? `overlap-${overlapIndex + 1}` : '';
@@ -106,7 +103,6 @@ const App = (function() {
             const block = document.createElement('div');
             block.className = `block ${overlapClass} ${task.focus ? 'focus' : ''} ${task.done ? 'completed-block' : ''}`;
             
-            // Positioning logic: (Hour - StartOffset) * PixelsPerHour
             const topPos = (b.start - 6) * 70;
             block.style.top = `${topPos + 5}px`;
             block.style.height = `${(b.duration * 70) - 10}px`;
@@ -122,7 +118,7 @@ const App = (function() {
             `;
 
             block.ondragstart = (e) => {
-                state.movingBlockIndex = idx; // We are moving THIS block
+                state.movingBlockIndex = idx;
                 state.draggedTaskId = null;
             };
 
@@ -139,6 +135,7 @@ const App = (function() {
         const update = () => {
             const now = new Date();
             const s = now.getSeconds(), m = now.getMinutes(), h = now.getHours();
+            // Added check to ensure clock elements exist before trying to style them
             if(sHand) sHand.style.transform = `translateX(-50%) rotate(${(s/60)*360}deg)`;
             if(mHand) mHand.style.transform = `translateX(-50%) rotate(${(m/60)*360 + (s/60)*6}deg)`;
             if(hHand) hHand.style.transform = `translateX(-50%) rotate(${(h % 12 / 12) * 360 + (m / 60) * 30}deg)`;
@@ -163,10 +160,13 @@ const App = (function() {
     const init = () => {
         renderTasks(); renderTimeline(); startClock();
         
-        // Chatbot Toggle Fix
         if(DOM.fab && DOM.chatWindow) {
-            DOM.fab.onclick = () => DOM.chatWindow.classList.toggle('open');
-            document.getElementById('closeChat').onclick = () => DOM.chatWindow.classList.remove('open');
+            DOM.fab.onclick = (e) => {
+                e.stopPropagation();
+                DOM.chatWindow.classList.toggle('open');
+            };
+            const closeBtn = document.getElementById('closeChat');
+            if(closeBtn) closeBtn.onclick = () => DOM.chatWindow.classList.remove('open');
         }
 
         const sendBtn = document.getElementById('sendTaskBtn');
@@ -177,6 +177,7 @@ const App = (function() {
                 state.data.tasks.push({ id: Date.now(), text: val, focus: val.startsWith('f:'), done: false });
                 save(); renderTasks();
                 DOM.chatInput.value = '';
+                notify("Task added!");
             };
         }
 
