@@ -3,92 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trackler AI | 2026 Master</title>
+    <title>Trackler AI | Master Build</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="app">
     <nav class="sidebar">
-        <div class="logo-container">
+        <div class="logo-area">
             <img src="Trackler.png" alt="Trackler" class="app-logo">
             <span class="logo-text">Trackler</span>
         </div>
-        <div class="clock-card">
-            <div class="analog-clock">
+        
+        <div class="clock-section">
+            <div class="analog-clock" id="clock">
                 <div class="hand hour" id="hour-hand"></div>
                 <div class="hand minute" id="minute-hand"></div>
                 <div class="hand second" id="second-hand"></div>
+                <div class="center-dot"></div>
             </div>
-            <div id="date-label" class="date-label">Wednesday, May 6</div>
-            <div id="digital-time" class="time-label">20:19:26</div>
+            <div id="date-label" class="date-display">Wednesday, May 6</div>
+            <div id="digital-time" class="time-display">00:00:00</div>
         </div>
-        <div class="nav-menu">
-            <button class="nav-link active">Today</button>
-            <button class="nav-link" id="summaryBtn">📊 Day Summary</button>
+
+        <div class="nav-controls">
+            <button class="prime-btn">Today</button>
+            <button class="prime-btn outline" onclick="App.openSummary()">📊 Day Summary</button>
         </div>
     </nav>
 
-    <main class="main-content">
-        <header class="stats-header">
-            <div class="bento-card focus-zone">
-                <h3>Focus</h3>
-                <div id="focus-area" class="focus-content">Ready for your first task.</div>
+    <main class="dashboard">
+        <div class="bento-row">
+            <div class="card glass">
+                <label>PRIORITY FOCUS</label>
+                <div id="focus-area" class="focus-text">No urgent tasks</div>
             </div>
-            <div class="bento-card progress-zone">
-                <h3>Total Progress</h3>
-                <div id="stats-area" class="progress-ring-container"></div>
+            <div class="card glass">
+                <label>PROGRESS</label>
+                <div class="progress-wrap">
+                    <span id="stats-area">0%</span>
+                    <div class="bar-bg"><div id="progress-fill" class="bar-fill"></div></div>
+                </div>
             </div>
-        </header>
-        <section class="task-section">
-            <div class="card tasks-card">
-                <h3>Your Tasks</h3>
-                <div id="tasks" class="task-list"></div>
-            </div>
-        </section>
-    </main>
+        </div>
 
-    <aside class="right-panel">
-        <div class="timeline-header">
+        <div class="tasks-wrapper">
+            <h3>Your Tasks</h3>
+            <div id="tasks" class="task-grid"></div>
+        </div>
+        
+        <div class="timeline-wrapper">
             <h3>Fluid Timeline</h3>
+            <div id="timeline-container">
+                <div id="timeline"></div>
+            </div>
         </div>
-        <div id="timeline-container">
-            <div id="timeline"></div>
-        </div>
-    </aside>
+    </main>
 </div>
 
-<!-- DATA ANALYTICS MODAL -->
-<div id="summaryModal" class="modal-overlay">
-    <div class="modal-card">
-        <div class="modal-head">
-            <h2>Day Analytics</h2>
-            <button class="close-modal" onclick="App.closeSummary()">&times;</button>
-        </div>
-        <div class="analytics-dashboard">
-            <div class="stat-item"><p>Completed</p><h1 id="count-done" class="accent-text">0</h1></div>
-            <div class="stat-item"><p>Pending</p><h1 id="count-pending">0</h1></div>
-        </div>
-        <div class="infographic-box">
-            <div class="bar-bg"><div id="bar-fill" class="bar-fill"></div></div>
-        </div>
-    </div>
-</div>
-
-<!-- FLOATING PROACTIVE CHATBOT -->
-<div class="chatbot-wrapper">
-    <div class="chat-panel" id="chatWindow">
-        <div class="chat-head">
+<div class="bot-overlay">
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
             <div class="bot-info"><span class="status-dot"></span> Trackler AI</div>
-            <button class="minimize" onclick="App.toggleChat()">&times;</button>
+            <button class="close-chat" onclick="App.toggleChat()">&times;</button>
         </div>
-        <div class="chat-body" id="chatMessages"></div>
-        <div class="chat-foot">
-            <input type="text" id="chatInput" placeholder="Add meeting at 3pm urgent...">
-            <button id="sendBtn">Send</button>
+        <div id="chatMessages" class="chat-body">
+            <div class="msg ai">Hi! I'm Trackler AI. Try typing 'Meeting @14:00 urgent' or just a task name.</div>
+        </div>
+        <div class="chat-input-row">
+            <input type="text" id="chatInput" placeholder="Try 'Meeting @12:00'...">
+            <button id="sendBtn" class="purple-send">Send</button>
         </div>
     </div>
-    <button class="chat-fab pulse" id="chatFab" onclick="App.toggleChat()">💬</button>
+    <button class="floating-fab" onclick="App.toggleChat()">💬</button>
 </div>
 
 <script src="script.js"></script>
