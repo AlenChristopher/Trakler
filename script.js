@@ -13,51 +13,94 @@ const App = (function() {
         chatInput: document.getElementById('chatInput'),
         chatMessages: document.getElementById('chatMessages'),
         chatWindow: document.getElementById('chatWindow'),
-        fab: document.getElementById('chatFab')
+        fab: document.getElementById('chatFab'),
+        statsArea: document.getElementById('stats-area'),
+        focusArea: document.getElementById('focus-area')
     };
 
     const save = () => localStorage.setItem("trakler_v2", JSON.stringify(state.data));
 
+    // --- PROACTIVE AUDIO ENGINE ---
+    const playSound = (type) => {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            if (type === 'success') {
+                // Rising "Achievement" tone
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // A5
+            } else {
+                // Neutral notification blip
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            }
+            
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+        } catch(e) { console.log("Audio blocked by browser"); }
+    };
+
+    // --- PROACTIVE NOTIFICATION ENGINE ---
+    const sendNotification = (title, body) => {
+        if (Notification.permission === "granted") {
+            new Notification(title, { body });
+            playSound('alert');
+        }
+    };
+
+    // --- MODERN RENDER ENGINE ---
     const renderTasks = () => {
         if(!DOM.tasks) return;
         DOM.tasks.innerHTML = '';
-        let count = 0, doneCount = 0, priorityText = "None";
+        let count = 0, doneCount = 0, topPriority = "All clear!";
 
         state.data.tasks.forEach(t => {
-            if (!t.done) count++;
-            if (t.done) doneCount++;
-            if (t.focus && !t.done && priorityText === "None") priorityText = t.text;
+            if (!t.done) {
+                count++;
+                // Proactive: Auto-grab first active priority task for the Focus Card
+                if (t.focus && topPriority === "All clear!") topPriority = t.text;
+            } else {
+                doneCount++;
+            }
 
             if (state.currentFilter === 'focus' && (!t.focus || t.done)) return;
             if (state.currentFilter === 'completed' && !t.done) return;
             if (state.currentFilter === 'all' && t.done) return;
 
             const el = document.createElement('div');
+            // Modern card styling class
             el.className = `task ${t.focus ? 'focus-task' : ''} ${t.done ? 'completed' : ''}`;
-            el.draggable = true;
             el.innerHTML = `
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <input type="checkbox" ${t.done ? 'checked' : ''}>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="App.toggle(${t.id})">
                     <span class="task-text">${t.text}</span>
                 </div>
-                <button class="del-btn" style="background:none; border:none; color:#ef4444; cursor:pointer;">✕</button>
+                <button class="modern-close" onclick="App.delTask(${t.id})">&times;</button>
             `;
-
-            el.querySelector('input').onchange = () => { t.done = !t.done; save(); renderTasks(); renderTimeline(); };
-            el.querySelector('.del-btn').onclick = () => {
-                state.data.tasks = state.data.tasks.filter(x => x.id !== t.id);
-                state.data.blocks = state.data.blocks.filter(b => b.taskId !== t.id);
-                save(); renderTasks(); renderTimeline();
-            };
-            el.ondragstart = () => { state.draggedTaskId = t.id; state.movingBlockIndex = null; };
             DOM.tasks.appendChild(el);
         });
 
-        document.getElementById('focus-area').innerText = priorityText;
-        const percent = state.data.tasks.length > 0 ? (doneCount / state.data.tasks.length) * 100 : 0;
-        document.getElementById('stats-area').innerHTML = `
-            <div style="font-size:12px; margin-bottom:5px;">${doneCount}/${state.data.tasks.length} Done</div>
-            <div class="progress-container"><div class="progress-bar" style="width: ${percent}%"></div></div>
+        // Update Proactive Focus Card
+        DOM.focusArea.innerText = topPriority;
+
+        // Update Modern Circular Progress Ring
+        const total = state.data.tasks.length;
+        const percent = total > 0 ? (doneCount / total) * 100 : 0;
+        
+        DOM.statsArea.innerHTML = `
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div class="progress-circle" style="--p:${Math.round(percent)}">
+                    <span>${Math.round(percent)}%</span>
+                </div>
+                <div>
+                    <div style="font-weight:700; font-size:18px;">${doneCount}/${total}</div>
+                    <div style="font-size:11px; color:var(--text-muted);">Goals Completed</div>
+                </div>
+            </div>
         `;
         if(DOM.inboxCount) DOM.inboxCount.innerText = count;
     };
@@ -85,7 +128,7 @@ const App = (function() {
             const others = state.data.blocks.filter(other => other.start === b.start);
             const block = document.createElement('div');
             
-            // Fixed side-by-side logic
+            // SIDE-BY-SIDE LOGIC
             const overlapIndex = others.indexOf(b);
             block.className = `block ${others.length > 1 ? 'overlap-' + (overlapIndex + 1) : ''}`;
             
@@ -93,13 +136,12 @@ const App = (function() {
             block.style.height = `${(b.duration * 70) - 10}px`;
             block.draggable = true;
             
-            // pointer-events: auto on buttons ensures +/- works while block is draggable
             block.innerHTML = `
                 <span style="font-weight:600;">${task.text}</span>
                 <div class="duration-controls" style="pointer-events: auto;">
                     <span onclick="event.stopPropagation(); App.adj(${idx}, -1)" class="duration-btn">−</span>
                     <span onclick="event.stopPropagation(); App.adj(${idx}, 1)" class="duration-btn">+</span>
-                    <span onclick="event.stopPropagation(); App.rem(${idx})" class="duration-btn" style="color:#ff4d4d;">×</span>
+                    <span onclick="event.stopPropagation(); App.rem(${idx})" class="duration-btn">×</span>
                 </div>`;
                 
             block.ondragstart = () => { state.movingBlockIndex = idx; state.draggedTaskId = null; };
@@ -107,31 +149,36 @@ const App = (function() {
         });
     };
 
-    const addChatMessage = (text, type) => {
-        const msg = document.createElement('div');
-        msg.className = `msg ${type}-msg`;
-        msg.innerText = text;
-        DOM.chatMessages.appendChild(msg);
-        DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
-    };
-
-    const startClock = () => {
-        const hHand = document.getElementById('hour-hand');
-        const mHand = document.getElementById('minute-hand');
-        const sHand = document.getElementById('second-hand');
-        const dTime = document.getElementById('digital-time');
-
-        const update = () => {
-            const now = new Date(), s = now.getSeconds(), m = now.getMinutes(), h = now.getHours();
-            if(sHand) sHand.style.transform = `translateX(-50%) rotate(${(s/60)*360}deg)`;
-            if(mHand) mHand.style.transform = `translateX(-50%) rotate(${(m/60)*360 + (s/60)*6}deg)`;
-            if(hHand) hHand.style.transform = `translateX(-50%) rotate(${(h % 12 / 12) * 360 + (m / 60) * 30}deg)`;
-            if(dTime) dTime.innerText = now.toLocaleTimeString();
-        };
-        setInterval(update, 1000); update();
+    // --- PROACTIVE HEARTBEAT: Checks for upcoming tasks ---
+    const startHeartbeat = () => {
+        setInterval(() => {
+            const now = new Date();
+            const h = now.getHours();
+            const m = now.getMinutes();
+            if (m === 0) { // On the hour
+                const currentBlock = state.data.blocks.find(b => b.start === h);
+                if (currentBlock) {
+                    const task = state.data.tasks.find(t => t.id === currentBlock.taskId);
+                    if (task && !task.done) sendNotification("Trackler AI Alert", `Time to start: ${task.text}`);
+                }
+            }
+        }, 60000);
     };
 
     window.App = {
+        toggle: (id) => {
+            const t = state.data.tasks.find(x => x.id === id);
+            if(t) {
+                t.done = !t.done;
+                if(t.done) playSound('success');
+                save(); renderTasks(); renderTimeline();
+            }
+        },
+        delTask: (id) => {
+            state.data.tasks = state.data.tasks.filter(x => x.id !== id);
+            state.data.blocks = state.data.blocks.filter(b => b.taskId !== id);
+            save(); renderTasks(); renderTimeline();
+        },
         adj: (idx, amt) => { 
             if(state.data.blocks[idx]) {
                 state.data.blocks[idx].duration = Math.max(1, state.data.blocks[idx].duration + amt); 
@@ -144,56 +191,66 @@ const App = (function() {
     const handleChat = () => {
         const val = DOM.chatInput.value.trim();
         if (!val) return;
-        addChatMessage(val, "user");
+        
+        // Display user message
+        const userMsg = document.createElement('div');
+        userMsg.className = 'msg user-msg';
+        userMsg.innerText = val;
+        DOM.chatMessages.appendChild(userMsg);
 
-        // 1. SMART PRIORITY DETECTION
-        const priorityKeywords = ['urgent', 'important', 'deadline', 'must', 'focus', 'asap'];
-        let isFocus = val.toLowerCase().startsWith('f:') || 
-                      priorityKeywords.some(word => val.toLowerCase().includes(word));
+        // --- PROACTIVE NLP PARSING ---
+        const lower = val.toLowerCase();
+        // Priority Detection (Case Insensitive)
+        const priorityKeywords = ['urgent', 'important', 'asap', 'focus', 'deadline', 'must'];
+        const isFocus = lower.startsWith('f:') || priorityKeywords.some(kw => lower.includes(kw));
 
-        // 2. SMART TIME DETECTION (Looks for @12, @12:00, or "at 12")
-        const timeMatch = val.match(/@(\d{1,2})(?::(\d{2}))?/) || val.match(/at\s(\d{1,2})(?::(\d{2}))?/);
-        let scheduledHour = null;
-        if (timeMatch) {
-            scheduledHour = parseInt(timeMatch[1]);
-            if (scheduledHour < 7) scheduledHour += 12; // Auto-PM adjustment
-        }
+        // Time Detection (@14 or at 2)
+        const timeMatch = val.match(/@(\d{1,2})/) || val.match(/at\s(\d{1,2})/);
+        let hour = timeMatch ? parseInt(timeMatch[1]) : null;
+        if (hour !== null && hour < 7) hour += 12; // Smart PM correction
 
-        // 3. CLEAN TEXT
-        const cleanText = val.replace(/@\d{1,2}(:\d{2})?/, '')
-                            .replace(/at\s\d{1,2}(:\d{2})?/, '')
-                            .replace('f:', '')
-                            .trim();
+        // Clean text for the task card
+        const cleanText = val.replace(/@\d+/, '').replace(/at\s\d+/, '').replace('f:', '').trim();
 
         const taskId = Date.now();
         state.data.tasks.push({ id: taskId, text: cleanText, focus: isFocus, done: false });
 
-        // 4. AUTO-SCHEDULE LOGIC
-        if (scheduledHour >= 6 && scheduledHour <= 23) {
-            state.data.blocks.push({ taskId: taskId, start: scheduledHour, duration: 1 });
-            setTimeout(() => addChatMessage(`Scheduled "${cleanText}" for ${scheduledHour}:00.`, "ai"), 600);
-        } else {
-            setTimeout(() => addChatMessage(`Got it! Added "${cleanText}" to your inbox.`, "ai"), 600);
+        // PROACTIVE CONFLICT CHECK
+        let response = `Added "${cleanText}" to your inbox.`;
+        if(hour && hour >= 6 && hour <= 23) {
+            const conflict = state.data.blocks.find(b => b.start === hour);
+            state.data.blocks.push({ taskId, start: hour, duration: 1 });
+            response = conflict ? 
+                `Scheduled "${cleanText}" at ${hour}:00. Warning: This overlaps with an existing task!` : 
+                `Scheduled "${cleanText}" for ${hour}:00.`;
+        } else if (isFocus) {
+            response = `Added "${cleanText}" as a High Priority task.`;
         }
+
+        setTimeout(() => {
+            const aiMsg = document.createElement('div');
+            aiMsg.className = 'msg ai-msg';
+            aiMsg.innerText = response;
+            DOM.chatMessages.appendChild(aiMsg);
+            DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
+        }, 600);
 
         save(); renderTasks(); renderTimeline();
         DOM.chatInput.value = '';
+        DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
     };
 
     const init = () => {
-        renderTasks(); renderTimeline(); startClock();
+        if ("Notification" in window) Notification.requestPermission();
+        renderTasks(); renderTimeline(); startHeartbeat();
         
         DOM.fab.onclick = (e) => { e.stopPropagation(); DOM.chatWindow.classList.toggle('open'); };
         document.getElementById('closeChat').onclick = () => DOM.chatWindow.classList.remove('open');
         
-        if (DOM.chatMessages.children.length === 0) {
-            setTimeout(() => addChatMessage("Hi! I'm Trackler AI. Try typing 'Meeting @14:00 urgent' or just a task name.", "ai"), 500);
-        }
-
         document.getElementById('sendTaskBtn').onclick = handleChat;
         DOM.chatInput.onkeydown = (e) => { if(e.key === 'Enter') handleChat(); };
 
-        // View Toggles
+        // Sidebar Navigation
         document.querySelectorAll('.nav').forEach(btn => {
             btn.onclick = () => {
                 document.querySelectorAll('.nav').forEach(b => b.classList.remove('active'));
@@ -203,7 +260,7 @@ const App = (function() {
             };
         });
 
-        // Filters
+        // Category Filters
         document.querySelectorAll('.tag').forEach(tag => {
             tag.onclick = () => {
                 document.querySelectorAll('.tag').forEach(t => t.classList.remove('active-tag'));
