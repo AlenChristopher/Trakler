@@ -1,124 +1,129 @@
 const App = (function() {
-    // 1. Storage & State
-    const state = { 
-        data: JSON.parse(localStorage.getItem("trakler_v2")) || { tasks: [], blocks: [] } 
-    };
-    const save = () => localStorage.setItem("trakler_v2", JSON.stringify(state.data));
+    const state = { data: JSON.parse(localStorage.getItem("trackler_master_v1")) || { tasks: [], blocks: [] } };
+    const save = () => { localStorage.setItem("trackler_master_v1", JSON.stringify(state.data)); render(); };
 
-    // 2. Success Sound (Proactive Feedback)
-    const playSound = () => {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.frequency.setValueAtTime(523, ctx.currentTime); // C5 note
-            gain.gain.setValueAtTime(0.05, ctx.currentTime);
-            osc.start(); osc.stop(ctx.currentTime + 0.15);
-        } catch(e) { console.log("Sound interaction needed"); }
+    const playSuccessTone = () => {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.15);
     };
 
-    // 3. The Main Renderer
-    const render = () => {
-        const tasks = document.getElementById('tasks');
-        const stats = document.getElementById('stats-area');
-        const timeline = document.getElementById('timeline');
-        
-        if (!tasks) return;
+    // Advanced NLP Engine (Handles time, priority, and "remind me" intents)
+    const processIntent = (input) => {
+        const prompt = input.toLowerCase();
+        let time = null;
+        const timeRegex = /@(\d{1,2})|(\d{1,2})\s*(pm|am)|at\s*(\d{1,2})/;
+        const match = prompt.match(timeRegex);
 
-        // Render Tasks
-        tasks.innerHTML = '';
-        let done = 0;
-        state.data.tasks.forEach(t => {
-            if (t.done) done++;
-            const el = document.createElement('div');
-            el.className = `task ${t.done ? 'completed' : ''}`;
-            el.innerHTML = `
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="App.toggle(${t.id})">
-                    <span>${t.text}</span>
-                </div>
-                <button onclick="App.del(${t.id})" style="background:none;border:none;color:red;cursor:pointer;">&times;</button>
-            `;
-            tasks.appendChild(el);
-        });
-
-        // Update Progress Ring
-        const total = state.data.tasks.length;
-        const percent = total > 0 ? (done / total) * 100 : 0;
-        if (stats) {
-            stats.innerHTML = `
-                <div class="progress-circle" style="--p:${Math.round(percent)}">
-                    <span>${Math.round(percent)}%</span>
-                </div>
-            `;
+        if (match) {
+            let hr = parseInt(match[1] || match[2] || match[4]);
+            if (prompt.includes('pm') && hr < 12) hr += 12;
+            if (prompt.includes('am') && hr === 12) hr = 0;
+            time = hr;
         }
 
-        // Render Timeline Grid (6 AM to 11 PM)
+        return {
+            cleanText: input.replace(timeRegex, '').replace(/urgent|asap|priority|remind me to/gi, '').trim(),
+            time: time,
+            isUrgent: /urgent|asap|priority/i.test(prompt)
+        };
+    };
+
+    const render = () => {
+        const taskArea = document.getElementById('tasks');
+        const timeline = document.getElementById('timeline');
+        if (!taskArea) return;
+
+        taskArea.innerHTML = '';
+        let doneCount = 0;
+
+        state.data.tasks.forEach(t => {
+            if (t.done) doneCount++;
+            const el = document.createElement('div');
+            el.className = `task-item ${t.urgent ? 'urgent-glow' : ''}`;
+            el.style = "background:rgba(255,255,255,0.03); padding:18px; border-radius:16px; margin-bottom:12px; display:flex; justify-content:space-between; border: 1px solid var(--border)";
+            el.innerHTML = `
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="App.toggleTask(${t.id})" style="accent-color:var(--accent)">
+                    <span style="${t.done ? 'text-decoration:line-through; opacity:0.5' : ''}">${t.text}</span>
+                </div>
+                <button onclick="App.deleteTask(${t.id})" style="background:none; border:none; color:#ef4444; font-size:18px; cursor:pointer;">&times;</button>
+            `;
+            taskArea.appendChild(el);
+        });
+
+        // Timeline Logic
         if (timeline) {
             timeline.innerHTML = '';
-            for (let i = 6; i <= 23; i++) {
+            for(let i=0; i<24; i++) {
                 const slot = document.createElement('div');
                 slot.className = 'time-slot';
-                slot.style.height = '70px';
-                slot.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-                slot.style.position = 'relative';
-                slot.setAttribute('data-time', i > 12 ? `${i-12} PM` : (i === 12 ? "12 PM" : `${i} AM`));
+                slot.setAttribute('data-time', i % 12 === 0 ? '12 ' + (i < 12 ? 'AM' : 'PM') : (i % 12) + (i < 12 ? ' AM' : ' PM'));
                 timeline.appendChild(slot);
             }
-
-            // Draw scheduled blocks on top of grid
             state.data.blocks.forEach((b, idx) => {
-                const task = state.data.tasks.find(t => t.id === b.taskId);
-                if (!task) return;
+                const t = state.data.tasks.find(x => x.id === b.taskId);
+                if (!t) return;
                 const block = document.createElement('div');
                 block.className = 'block';
-                block.style.top = `${(b.start - 6) * 70 + 5}px`;
-                block.style.height = `${(b.duration * 70) - 10}px`;
-                block.innerHTML = `<span>${task.text}</span> <button onclick="App.remBlock(${idx})">&times;</button>`;
+                block.style.top = `${b.start * 70 + 5}px`;
+                block.style.height = `60px`;
+                block.innerHTML = `<span>${t.text}</span> <span onclick="App.remBlock(${idx})">&times;</span>`;
                 timeline.appendChild(block);
             });
         }
+
+        const pct = state.data.tasks.length > 0 ? (doneCount / state.data.tasks.length) * 100 : 0;
+        document.getElementById('stats-area').innerHTML = `<h2 style="color:var(--accent)">${Math.round(pct)}%</h2>`;
     };
 
-    // 4. Clock Logic
-    const startClock = () => {
-        const update = () => {
-            const now = new Date(), s = now.getSeconds(), m = now.getMinutes(), h = now.getHours();
-            const sH = document.getElementById('second-hand'), 
-                  mH = document.getElementById('minute-hand'), 
-                  hH = document.getElementById('hour-hand');
-            if (sH) sH.style.transform = `translateX(-50%) rotate(${(s/60)*360}deg)`;
-            if (mH) mH.style.transform = `translateX(-50%) rotate(${(m/60)*360}deg)`;
-            if (hH) hH.style.transform = `translateX(-50%) rotate(${(h%12/12)*360 + (m/60)*30}deg)`;
-            const dt = document.getElementById('digital-time');
-            if (dt) dt.innerText = now.toLocaleTimeString();
-        };
-        setInterval(update, 1000); update();
-    };
-
-    // Global Functions
     window.App = {
-        toggle: (id) => {
-            const t = state.data.tasks.find(x => x.id === id);
-            if (t) {
-                t.done = !t.done;
-                if (t.done) playSound();
-                save(); render();
-            }
+        toggleChat: () => document.getElementById('chatWindow').classList.toggle('open'),
+        toggleTask: (id) => { 
+            const t = state.data.tasks.find(x => x.id === id); 
+            if (t) { t.done = !t.done; if(t.done) playSuccessTone(); save(); }
         },
-        del: (id) => {
-            state.data.tasks = state.data.tasks.filter(x => x.id !== id);
-            state.data.blocks = state.data.blocks.filter(b => b.taskId !== id);
-            save(); render();
+        deleteTask: (id) => { 
+            state.data.tasks = state.data.tasks.filter(x => x.id !== id); 
+            state.data.blocks = state.data.blocks.filter(b => b.taskId !== id); 
+            save(); 
         },
-        remBlock: (idx) => {
-            state.data.blocks.splice(idx, 1);
-            save(); render();
-        }
+        openSummary: () => {
+            const done = state.data.tasks.filter(t => t.done).length;
+            const total = state.data.tasks.length;
+            document.getElementById('count-done').innerText = done;
+            document.getElementById('count-pending').innerText = total - done;
+            document.getElementById('bar-fill').style.width = total > 0 ? `${(done/total)*100}%` : '0%';
+            document.getElementById('summaryModal').classList.add('open');
+        },
+        closeSummary: () => document.getElementById('summaryModal').classList.remove('open'),
+        remBlock: (idx) => { state.data.blocks.splice(idx, 1); save(); }
     };
 
-    return { init: () => { startClock(); render(); } };
-})();
+    return { init: () => {
+        render();
+        setInterval(() => {
+            const n = new Date();
+            document.getElementById('hour-hand').style.transform = `translateX(-50%) rotate(${(n.getHours() % 12 / 12) * 360 + (n.getMinutes() / 60) * 30}deg)`;
+            document.getElementById('minute-hand').style.transform = `translateX(-50%) rotate(${(n.getMinutes() / 60) * 360}deg)`;
+            document.getElementById('second-hand').style.transform = `translateX(-50%) rotate(${(n.getSeconds() / 60) * 360}deg)`;
+            document.getElementById('digital-time').innerText = n.toLocaleTimeString();
+        }, 1000);
 
+        document.getElementById('summaryBtn').onclick = App.openSummary;
+        document.getElementById('sendBtn').onclick = () => {
+            const input = document.getElementById('chatInput');
+            const res = processIntent(input.value);
+            if (!res.cleanText) return;
+            const id = Date.now();
+            state.data.tasks.push({ id, text: res.cleanText, done: false, urgent: res.isUrgent });
+            if (res.time !== null) state.data.blocks.push({ taskId: id, start: res.time });
+            save(); input.value = '';
+        };
+    }};
+})();
 document.addEventListener('DOMContentLoaded', App.init);
