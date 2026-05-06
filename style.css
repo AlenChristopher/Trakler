@@ -78,4 +78,20 @@ body {
     .sidebar { display: flex; flex-direction: column; align-items: center; }
     .filter-group { flex-direction: row; flex-wrap: wrap; }
     .tag { width: auto; }
+    /* Force the logo to stay small */
+.app-logo {
+    width: 40px !important; /* Adjust this to your liking */
+    height: 40px !important;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+/* Ensure the clock hands are visible and centered */
+.hand {
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform-origin: bottom;
+    transition: transform 0.5s cubic-bezier(0.4, 2.08, 0.55, 0.44); /* Smooth tick */
+}
 }
