@@ -4,70 +4,48 @@ const App = (function() {
         currentFilter: 'all'
     };
 
-    const DOM = {
-        tasks: document.getElementById('tasks'),
-        timeline: document.getElementById('timeline'),
-        chatInput: document.getElementById('chatInput'),
-        chatMessages: document.getElementById('chatMessages'),
-        chatWindow: document.getElementById('chatWindow'),
-        fab: document.getElementById('chatFab')
-    };
-
     const save = () => localStorage.setItem("trakler_v2", JSON.stringify(state.data));
 
-    // AUDIO ENGINE
-    const playSound = (type) => {
+    // SUCCESS SOUND
+    const playSuccessSound = () => {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.frequency.setValueAtTime(type === 'success' ? 523 : 440, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(523, audioCtx.currentTime); // C5
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // A5
         gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
         osc.start(); osc.stop(audioCtx.currentTime + 0.15);
     };
 
-    // CLOCK ENGINE
-    const startClock = () => {
-        const update = () => {
-            const now = new Date(), s = now.getSeconds(), m = now.getMinutes(), h = now.getHours();
-            const sHand = document.getElementById('second-hand');
-            const mHand = document.getElementById('minute-hand');
-            const hHand = document.getElementById('hour-hand');
-            const dTime = document.getElementById('digital-time');
-
-            if(sHand) sHand.style.transform = `translateX(-50%) rotate(${(s/60)*360}deg)`;
-            if(mHand) mHand.style.transform = `translateX(-50%) rotate(${(m/60)*360}deg)`;
-            if(hHand) hHand.style.transform = `translateX(-50%) rotate(${(h%12/12)*360 + (m/60)*30}deg)`;
-            if(dTime) dTime.innerText = now.toLocaleTimeString();
-        };
-        setInterval(update, 1000); update();
-    };
-
     const renderTasks = () => {
-        if(!DOM.tasks) return;
-        DOM.tasks.innerHTML = '';
-        let doneCount = 0;
+        const container = document.getElementById('tasks');
+        const stats = document.getElementById('stats-area');
+        if(!container) return;
+        
+        container.innerHTML = '';
+        let done = 0;
 
         state.data.tasks.forEach(t => {
-            if(t.done) doneCount++;
+            if(t.done) done++;
             const el = document.createElement('div');
             el.className = `task ${t.focus ? 'focus-task' : ''}`;
             el.innerHTML = `
-                <div style="display:flex; align-items:center; gap:10px;">
+                <div style="display:flex;align-items:center;gap:10px;">
                     <input type="checkbox" ${t.done ? 'checked' : ''} onchange="App.toggle(${t.id})">
                     <span>${t.text}</span>
                 </div>
-                <button onclick="App.delete(${t.id})" style="background:none; border:none; color:#ef4444; font-size:18px;">&times;</button>
+                <button onclick="App.delete(${t.id})" style="background:none;border:none;color:#ff4d4d;font-size:20px;cursor:pointer;">&times;</button>
             `;
-            DOM.tasks.appendChild(el);
+            container.appendChild(el);
         });
 
         // UPDATE PROGRESS RING
-        const percent = state.data.tasks.length > 0 ? (doneCount / state.data.tasks.length) * 100 : 0;
-        document.getElementById('stats-area').innerHTML = `
-            <div style="display:flex; align-items:center; gap:10px;">
-                <div style="font-weight:700; font-size:18px;">${Math.round(percent)}%</div>
-                <div style="font-size:11px;">Completed</div>
+        const total = state.data.tasks.length;
+        const percent = total > 0 ? (done / total) * 100 : 0;
+        stats.innerHTML = `
+            <div class="progress-circle" style="--p:${Math.round(percent)}">
+                <span>${Math.round(percent)}%</span>
             </div>
         `;
     };
@@ -75,7 +53,11 @@ const App = (function() {
     window.App = {
         toggle: (id) => {
             const t = state.data.tasks.find(x => x.id === id);
-            if(t) { t.done = !t.done; if(t.done) playSound('success'); save(); renderTasks(); }
+            if(t) {
+                t.done = !t.done;
+                if(t.done) playSuccessSound(); // PLAY SOUND
+                save(); renderTasks(); // UPDATE RING
+            }
         },
         delete: (id) => {
             state.data.tasks = state.data.tasks.filter(x => x.id !== id);
@@ -83,27 +65,22 @@ const App = (function() {
         }
     };
 
-    const handleChat = () => {
-        const val = DOM.chatInput.value.trim();
-        if(!val) return;
-
-        // SMART NLP
-        const isFocus = ['urgent', 'important', 'asap'].some(kw => val.toLowerCase().includes(kw));
-        const timeMatch = val.match(/@(\d{1,2})/);
-        const hour = timeMatch ? parseInt(timeMatch[1]) : null;
-
-        const taskId = Date.now();
-        state.data.tasks.push({ id: taskId, text: val.replace(/@\d+/, '').trim(), focus: isFocus, done: false });
-        
-        save(); renderTasks();
-        DOM.chatInput.value = '';
+    const startClock = () => {
+        const update = () => {
+            const now = new Date(), s = now.getSeconds(), m = now.getMinutes(), h = now.getHours();
+            const sH = document.getElementById('second-hand'), mH = document.getElementById('minute-hand'), hH = document.getElementById('hour-hand');
+            if(sH) sH.style.transform = `translateX(-50%) rotate(${(s/60)*360}deg)`;
+            if(mH) mH.style.transform = `translateX(-50%) rotate(${(m/60)*360}deg)`;
+            if(hH) hH.style.transform = `translateX(-50%) rotate(${(h%12/12)*360 + (m/60)*30}deg)`;
+            document.getElementById('digital-time').innerText = now.toLocaleTimeString();
+        };
+        setInterval(update, 1000); update();
     };
 
     const init = () => {
         startClock(); renderTasks();
-        DOM.fab.onclick = () => DOM.chatWindow.classList.toggle('open');
-        document.getElementById('closeChat').onclick = () => DOM.chatWindow.classList.remove('open');
-        document.getElementById('sendTaskBtn').onclick = handleChat;
+        document.getElementById('chatFab').onclick = () => document.getElementById('chatWindow').classList.toggle('open');
+        document.getElementById('closeChat').onclick = () => document.getElementById('chatWindow').classList.remove('open');
     };
 
     return { init };
