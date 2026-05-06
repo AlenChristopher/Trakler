@@ -76,76 +76,72 @@ const App = (function() {
     };
 
     const renderTimeline = () => {
-    DOM.timeline.innerHTML = '';
-    // Create slots from 6 AM to 11 PM
-    for (let i = 6; i <= 23; i++) {
-        const slot = document.createElement('div');
-        slot.className = 'time-slot';
-        // Format the time label
-        const timeLabel = i > 12 ? `${i - 12} PM` : (i === 12 ? "12 PM" : `${i} AM`);
-        slot.setAttribute('data-time', timeLabel);
-        
-        // Find tasks scheduled for THIS specific hour
-        const hourBlocks = state.data.blocks.filter(b => b.start === i);
-        
-        hourBlocks.forEach((b) => {
-            const task = state.data.tasks.find(t => t.id === b.taskId);
-            if (!task) return;
-
-            const block = document.createElement('div');
-            // Check if task is done to apply strike-through style
-            block.className = `block ${task.focus ? 'focus' :Short} ${task.done ? 'completed-block' : ''}`;
+        DOM.timeline.innerHTML = '';
+        for (let i = 6; i <= 23; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'time-slot';
+            const timeLabel = i > 12 ? `${i - 12} PM` : (i === 12 ? "12 PM" : `${i} AM`);
+            slot.setAttribute('data-time', timeLabel);
             
-            // Set height based on duration (1 hour = 60px minus margins)
-            block.style.height = `${(b.duration * 60) - 10}px`;
-            block.style.minHeight = "50px"; // Ensure it's visible
-
-            block.innerHTML = `
-                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${task.text}</span>
-                <div class="duration-controls">
-                    <span onclick="event.stopPropagation(); App.adj(${state.data.blocks.indexOf(b)}, -1)" class="duration-btn">-</span>
-                    <span onclick="event.stopPropagation(); App.adj(${state.data.blocks.indexOf(b)}, 1)" class="duration-btn">+</span>
-                    <span onclick="event.stopPropagation(); App.rem(${state.data.blocks.indexOf(b)})" style="margin-left:5px; cursor:pointer;">&times;</span>
-                </div>
-            `;
-            slot.appendChild(block); // This places the block INSIDE the hour row
-        });
-
-        // Drop logic
-        slot.ondragover = (e) => e.preventDefault();
-        slot.ondrop = (e) => {
-            e.preventDefault();
-            if (!state.draggedTaskId) return;
+            const hourBlocks = state.data.blocks.filter(b => b.start === i);
             
-            // Prevent duplicate drops of the same task in the same hour
-            const exists = state.data.blocks.find(b => b.taskId === state.draggedTaskId && b.start === i);
-            if(!exists) {
-                state.data.blocks.push({ taskId: state.draggedTaskId, start: i, duration: 1 });
-                save();
-                renderTimeline();
-                notify(`Scheduled for ${timeLabel}`);
-            }
-        };
-        DOM.timeline.appendChild(slot);
-    }
-};
-    // Global App object for HTML onclicks
-    window.App = {
-        adj: (idx, amt) => {
-            state.data.blocks[idx].duration = Math.max(1, state.data.blocks[idx].duration + amt);
-            save(); renderTimeline();
-        },
-        rem: (idx) => {
-            state.data.blocks.splice(idx, 1);
-            save(); renderTimeline();
+            hourBlocks.forEach((b) => {
+                const task = state.data.tasks.find(t => t.id === b.taskId);
+                if (!task) return;
+
+                const block = document.createElement('div');
+                // FIXED TYPO HERE: Changed "Short" to empty string ""
+                block.className = `block ${task.focus ? 'focus' : ''} ${task.done ? 'completed-block' : ''}`;
+                
+                block.style.height = `${(b.duration * 60) - 10}px`;
+                block.style.minHeight = "50px";
+
+                // Use state.data.blocks.indexOf(b) directly in the template to ensure the index is always fresh
+                block.innerHTML = `
+                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${task.text}</span>
+                    <div class="duration-controls">
+                        <span onclick="event.stopPropagation(); App.adj(${state.data.blocks.indexOf(b)}, -1)" class="duration-btn">-</span>
+                        <span onclick="event.stopPropagation(); App.adj(${state.data.blocks.indexOf(b)}, 1)" class="duration-btn">+</span>
+                        <span onclick="event.stopPropagation(); App.rem(${state.data.blocks.indexOf(b)})" style="margin-left:5px; cursor:pointer;">&times;</span>
+                    </div>
+                `;
+                slot.appendChild(block);
+            });
+
+            slot.ondragover = (e) => e.preventDefault();
+            slot.ondrop = (e) => {
+                e.preventDefault();
+                if (!state.draggedTaskId) return;
+                
+                const exists = state.data.blocks.find(b => b.taskId === state.draggedTaskId && b.start === i);
+                if(!exists) {
+                    state.data.blocks.push({ taskId: state.draggedTaskId, start: i, duration: 1 });
+                    save(); renderTimeline();
+                    notify(`Scheduled for ${timeLabel}`);
+                }
+            };
+            DOM.timeline.appendChild(slot);
         }
     };
 
-    // Initialize UI
+    window.App = {
+        adj: (idx, amt) => {
+            if (state.data.blocks[idx]) {
+                state.data.blocks[idx].duration = Math.max(1, state.data.blocks[idx].duration + amt);
+                save(); renderTimeline();
+            }
+        },
+        rem: (idx) => {
+            if (state.data.blocks[idx]) {
+                state.data.blocks.splice(idx, 1);
+                save(); renderTimeline();
+            }
+        }
+    };
+
     const init = () => {
         renderTasks(); renderTimeline();
         
-        // Chat Logic
         const fab = document.getElementById('chatFab');
         const win = document.getElementById('chatWindow');
         fab.onclick = () => win.classList.toggle('open');
@@ -166,7 +162,6 @@ const App = (function() {
         document.getElementById('sendTaskBtn').onclick = sendTask;
         DOM.chatInput.onkeydown = (e) => { if(e.key === 'Enter') sendTask(); };
 
-        // Filter Logic
         document.querySelectorAll('.tag').forEach(tag => {
             tag.onclick = () => {
                 document.querySelectorAll('.tag').forEach(t => t.classList.remove('active-tag'));
@@ -176,7 +171,6 @@ const App = (function() {
             };
         });
 
-        // Sidebar Navigation
         document.querySelectorAll('.nav').forEach(btn => {
             btn.onclick = () => {
                 document.querySelectorAll('.nav').forEach(b => b.classList.remove('active'));
