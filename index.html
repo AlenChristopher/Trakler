@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trackler AI</title>
+    <title>Trackler AI | 2026 Master</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,55 +14,83 @@
             <img src="Trackler.png" alt="Trackler" class="app-logo">
             <span class="logo-text">Trackler</span>
         </div>
-        <div class="clock-container">
+        <div class="clock-card">
             <div class="analog-clock">
                 <div class="hand hour" id="hour-hand"></div>
                 <div class="hand minute" id="minute-hand"></div>
                 <div class="hand second" id="second-hand"></div>
-                <div class="center-dot"></div>
             </div>
-            <div id="digital-time" class="digital-time">00:00:00</div>
+            <div id="date-label" class="date-label">Wednesday, May 6</div>
+            <div id="digital-time" class="time-label">20:19:26</div>
         </div>
-        <div class="nav-links">
-            <button class="nav active" data-target="view-today">Today</button>
-            <button class="nav" data-target="view-upcoming">Upcoming</button>
-        </div>
-        <div class="section">
-            <p class="section-label">Categories</p>
-            <div class="filter-group">
-                <button class="tag active-tag" data-filter="all">Inbox <span id="inbox-count">0</span></button>
-                <button class="tag" data-filter="focus">Priority</button>
-                <button class="tag" data-filter="completed">Done</button>
-            </div>
+        <div class="nav-menu">
+            <button class="nav-link active">Today</button>
+            <button class="nav-link" id="summaryBtn">📊 Day Summary</button>
         </div>
     </nav>
-    <main class="main">
-        <section id="view-today" class="view-section active-view">
-            <div class="stats-row">
-                <div class="card stat-card"><h3>Focus</h3><div id="focus-area" class="text-muted">No High Priority</div></div>
-                <div class="card stat-card"><h3>Progress</h3><div id="stats-area"></div></div>
+
+    <main class="main-content">
+        <header class="stats-header">
+            <div class="bento-card focus-zone">
+                <h3>Focus</h3>
+                <div id="focus-area" class="focus-content">Ready for your first task.</div>
             </div>
-            <div class="card tasks-card"><h3>Your Tasks</h3><div id="tasks" class="task-list"></div></div>
-        </section>
-        <section id="view-upcoming" class="view-section hidden-view">
-            <div class="card empty-state"><h2>📅</h2><p>Future sync coming soon.</p></div>
+            <div class="bento-card progress-zone">
+                <h3>Total Progress</h3>
+                <div id="stats-area" class="progress-ring-container"></div>
+            </div>
+        </header>
+        <section class="task-section">
+            <div class="card tasks-card">
+                <h3>Your Tasks</h3>
+                <div id="tasks" class="task-list"></div>
+            </div>
         </section>
     </main>
-    <aside class="right">
-        <div class="timeline-card"><h3>Timeline</h3><div id="timeline-container"><div id="timeline"></div></div></div>
+
+    <aside class="right-panel">
+        <div class="timeline-header">
+            <h3>Fluid Timeline</h3>
+        </div>
+        <div id="timeline-container">
+            <div id="timeline"></div>
+        </div>
     </aside>
 </div>
-<div class="chatbot-container">
-    <div class="chat-window" id="chatWindow">
-        <div class="chat-header"><span>Trackler AI</span><button id="closeChat" class="modern-close">&times;</button></div>
-        <div class="chat-messages" id="chatMessages"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chatInput" placeholder="Try 'Meeting @12:00'...">
-            <button id="sendTaskBtn">Send</button>
+
+<!-- DATA ANALYTICS MODAL -->
+<div id="summaryModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-head">
+            <h2>Day Analytics</h2>
+            <button class="close-modal" onclick="App.closeSummary()">&times;</button>
+        </div>
+        <div class="analytics-dashboard">
+            <div class="stat-item"><p>Completed</p><h1 id="count-done" class="accent-text">0</h1></div>
+            <div class="stat-item"><p>Pending</p><h1 id="count-pending">0</h1></div>
+        </div>
+        <div class="infographic-box">
+            <div class="bar-bg"><div id="bar-fill" class="bar-fill"></div></div>
         </div>
     </div>
-    <button class="chat-fab" id="chatFab">💬</button>
 </div>
+
+<!-- FLOATING PROACTIVE CHATBOT -->
+<div class="chatbot-wrapper">
+    <div class="chat-panel" id="chatWindow">
+        <div class="chat-head">
+            <div class="bot-info"><span class="status-dot"></span> Trackler AI</div>
+            <button class="minimize" onclick="App.toggleChat()">&times;</button>
+        </div>
+        <div class="chat-body" id="chatMessages"></div>
+        <div class="chat-foot">
+            <input type="text" id="chatInput" placeholder="Add meeting at 3pm urgent...">
+            <button id="sendBtn">Send</button>
+        </div>
+    </div>
+    <button class="chat-fab pulse" id="chatFab" onclick="App.toggleChat()">💬</button>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>
