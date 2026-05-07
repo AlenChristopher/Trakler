@@ -1,251 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trackler AI | 2026 Master Final</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --accent: #9333ea; --bg: #070709; --card: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.1); }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; overflow-x: hidden; }
-        
-        .app-grid { display: grid; grid-template-columns: 280px 1fr 340px; height: 100vh; padding: 20px; gap: 20px; box-sizing: border-box; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trackler AI | Classic Master</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent: #9333ea; --bg: #070709; --card: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.1); }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; overflow-x: hidden; }
+        
+        /* 1. SINGLE COLUMN LAYOUT (STACKED) */
+        .app-container { display: flex; flex-direction: column; min-height: 100vh; padding: 20px; gap: 24px; max-width: 800px; margin: 0 auto; box-sizing: border-box; }
 
-        /* SIDEBAR & BRANDING */
-        .sidebar { display: flex; flex-direction: column; gap: 20px; border-right: 1px solid var(--border); padding-right: 20px; }
-        .logo-mini { width: 35px; height: 35px; border-radius: 8px; }
-        .analog-clock { width: 110px; height: 110px; border: 2px solid var(--border); border-radius: 50%; position: relative; margin: 0 auto; background: rgba(255,255,255,0.02); }
-        .hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; transform: translateX(-50%); border-radius: 5px; }
-        .hour { width: 4px; height: 28px; background: #fff; z-index: 3; }
-        .minute { width: 3px; height: 42px; background: #888; z-index: 2; }
-        .second { width: 2px; height: 48px; background: var(--accent); z-index: 1; }
-        
-        /* MODERN BUTTONS */
-        .btn-modern { background: var(--accent); border: none; padding: 12px; border-radius: 12px; color: #fff; font-weight: 700; cursor: pointer; width: 100%; transition: 0.3s; display: block; text-align: center; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); margin-top: 5px; }
-        .btn-modern:hover { filter: brightness(1.2); transform: translateY(-1px); }
+        /* 2. REVERTED BRANDING (Purple Square) */
+        .brand-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .logo-square { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 18px; }
+        .brand-name { font-size: 20px; font-weight: 700; }
 
-        /* TASK CARDS */
-        .glass-card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 24px; backdrop-filter: blur(10px); }
-        .task-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 18px; border-radius: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .task-card.priority { border-left: 5px solid var(--accent); background: rgba(147, 51, 234, 0.05); }
+        /* 3. CLASSY ANALOG CLOCK */
+        .clock-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 24px; text-align: center; }
+        .analog-clock { width: 100px; height: 100px; border: 2px solid var(--border); border-radius: 50%; position: relative; margin: 0 auto 15px; }
+        .hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; transform: translateX(-50%); border-radius: 5px; }
+        .hour { width: 4px; height: 25px; background: #fff; z-index: 3; }
+        .minute { width: 3px; height: 38px; background: #aaa; z-index: 2; }
+        .second { width: 2px; height: 42px; background: var(--accent); z-index: 1; }
+        .center-dot { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); z-index: 4; }
+        .date-display { color: var(--accent); font-weight: 600; margin-bottom: 5px; }
 
-        /* PROGRESS RING */
-        .prog-circle { font-size: 32px; font-weight: 800; color: var(--accent); margin-bottom: 5px; }
+        /* 4. MODERN BUTTONS */
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .modern-btn { background: var(--accent); border: none; padding: 14px; border-radius: 14px; color: white; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); }
 
-        /* CHATBOT (FIXED) */
-        .bot-anchor { position: fixed; bottom: 30px; right: 30px; z-index: 9999; }
-        .fab { width: 65px; height: 65px; border-radius: 50%; background: var(--accent); border: none; font-size: 28px; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .chat-win { position: absolute; bottom: 85px; right: 0; width: 340px; height: 500px; background: #0f1016; border: 1px solid var(--border); border-radius: 28px; display: none; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
-        .chat-win.open { display: flex; }
-        .chat-header { padding: 20px; background: rgba(255,255,255,0.03); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        .chat-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-        .bubble { padding: 12px 16px; border-radius: 18px; font-size: 14px; max-width: 85%; }
-        .bubble.ai { background: rgba(255,255,255,0.08); align-self: flex-start; border-bottom-left-radius: 4px; }
-        .bubble.user { background: var(--accent); align-self: flex-end; border-bottom-right-radius: 4px; }
-        .chat-input { padding: 15px; display: flex; gap: 10px; background: rgba(0,0,0,0.2); }
-        .chat-input input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: #fff; outline: none; }
-        .chat-input button { background: var(--accent); border: none; padding: 0 20px; border-radius: 12px; color: #fff; font-weight: 700; cursor: pointer; }
+        /* 5. TASK AREA (MAXIMIZED) */
+        .tasks-section { flex: 1; }
+        .task-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 18px; border-radius: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .task-card.urgent-mode { border-left: 5px solid var(--accent); background: rgba(147, 51, 234, 0.05); }
 
-        /* ANALYTICS MODAL */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 10001; }
-        .modal.open { display: flex; }
-        .modal-content { background: #111; padding: 30px; border-radius: 24px; width: 350px; text-align: center; border: 1px solid var(--border); }
+        /* 6. TIMELINE (MOVED TO BOTTOM) */
+        .timeline-section { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; height: 500px; overflow-y: auto; position: relative; }
+        .t-slot { height: 70px; border-bottom: 1px solid rgba(255,255,255,0.02); position: relative; }
+        .t-slot::after { content: attr(data-time); position: absolute; left: 0; top: -12px; font-size: 11px; color: #555; }
 
-        /* TIMELINE */
-        .timeline-grid { height: 100%; overflow-y: auto; background: var(--card); border-radius: 24px; padding: 20px; border: 1px solid var(--border); }
-        .t-slot { height: 70px; border-bottom: 1px solid rgba(255,255,255,0.02); position: relative; }
-        .t-slot::after { content: attr(data-time); position: absolute; left: 0; top: -12px; font-size: 10px; color: #555; }
-
-        @media (max-width: 900px) { .app-grid { display: flex; flex-direction: column; height: auto; } }
-    </style>
+        /* CHATBOT (FIXED) */
+        .bot-anchor { position: fixed; bottom: 25px; right: 25px; z-index: 9999; }
+        .fab { width: 60px; height: 60px; border-radius: 50%; background: var(--accent); border: none; font-size: 26px; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        .chat-win { position: absolute; bottom: 75px; right: 0; width: 320px; height: 450px; background: #0f1016; border: 1px solid var(--border); border-radius: 24px; display: none; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+        .chat-win.open { display: flex; }
+        .chat-input { padding: 12px; display: flex; gap: 8px; background: rgba(0,0,0,0.2); }
+        .chat-input input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: #fff; outline: none; }
+    </style>
 </head>
 <body>
 
-<div class="app-grid">
-    <nav class="sidebar">
-        <div style="display:flex; align-items:center; gap:12px;">
-            <img src="Trackler.png" alt="" class="logo-mini">
-            <span style="font-weight:700; font-size:22px;">Trackler</span>
-        </div>
-        <div class="clock-box">
-            <div class="analog-clock">
-                <div class="hand hour" id="hour-hand"></div>
-                <div class="hand minute" id="minute-hand"></div>
-                <div class="hand second" id="second-hand"></div>
-            </div>
-            <div id="date-label" style="text-align:center; color:var(--accent); font-weight:700; margin-top:15px;"></div>
-            <div id="digital-time" style="text-align:center; opacity:0.5; font-family:monospace;"></div>
-        </div>
-        <button class="btn-modern">Today</button>
-        <button id="daySummaryBtn" class="btn-modern btn-outline">📊 Day Summary</button>
-    </nav>
+<div class="app-container">
+    <div class="brand-header">
+        <div class="logo-square">T</div>
+        <span class="brand-name">Trackler</span>
+    </div>
 
-    <main>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:20px;">
-            <div class="glass-card">
-                <small style="opacity:0.5;">TOP FOCUS</small>
-                <div id="focus-area" style="font-size:18px; font-weight:700; margin-top:10px;">Ready for tasks</div>
-            </div>
-            <div class="glass-card">
-                <small style="opacity:0.5;">TOTAL PROGRESS</small>
-                <div id="prog-val" class="prog-circle">0%</div>
-                <div style="height:8px; background:rgba(255,255,255,0.1); border-radius:10px; overflow:hidden;">
-                    <div id="prog-fill" style="height:100%; background:var(--accent); width:0%; transition:1s;"></div>
-                </div>
-            </div>
-        </div>
-        <div class="glass-card">
-            <h3 style="margin-top:0;">Your Tasks</h3>
-            <div id="task-list"></div>
-        </div>
-    </main>
+    <div class="clock-card">
+        <div class="analog-clock">
+            <div class="hand hour" id="hour-hand"></div>
+            <div class="hand minute" id="minute-hand"></div>
+            <div class="hand second" id="second-hand"></div>
+            <div class="center-dot"></div>
+        </div>
+        <div id="date-label" class="date-display"></div>
+        <div id="digital-time" style="opacity:0.5; font-family:monospace;"></div>
+    </div>
 
-    <aside class="timeline-grid">
-        <h3 style="margin-top:0;">Timeline</h3>
-        <div id="timeline-v" style="position:relative; height:1200px;"></div>
-    </aside>
-</div>
+    <div class="btn-row">
+        <button class="modern-btn">Today</button>
+        <button class="modern-btn btn-outline" onclick="App.openSummary()">📊 Day Summary</button>
+    </div>
 
-<div id="summaryModal" class="modal">
-    <div class="modal-content">
-        <h2 style="margin-top:0;">Analytics</h2>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:20px 0;">
-            <div><small>Done</small><h2 id="count-done" style="color:var(--accent);">0</h2></div>
-            <div><small>Pending</small><h2 id="count-pending">0</h2></div>
-        </div>
-        <button class="btn-modern" id="closeSummaryBtn">Close</button>
-    </div>
+    <div class="tasks-section">
+        <h3 style="margin-top:0;">Your Tasks</h3>
+        <div id="task-list"></div>
+    </div>
+
+    <div class="timeline-section">
+        <h3 style="margin-top:0;">Timeline</h3>
+        <div id="timeline-v" style="position:relative; height:1200px;"></div>
+    </div>
 </div>
 
 <div class="bot-anchor">
-    <div class="chat-win" id="chatWin">
-        <div class="chat-header">
-            <span style="font-weight:700;">Trackler AI</span>
-            <button id="closeChatBtn" style="background:none; border:none; color:#fff; font-size:24px; cursor:pointer;">&times;</button>
-        </div>
-        <div class="chat-body" id="chatMsgs">
-            <div class="bubble ai">Hi! I'm Trackler. Try typing "Meeting @14:00 urgent"</div>
-        </div>
-        <div class="chat-input">
-            <input type="text" id="chatInput" placeholder="Add a task...">
-            <button id="sendMessageBtn">Send</button>
-        </div>
-    </div>
-    <button id="fabBtn" class="fab">💬</button>
+    <div class="chat-win" id="chatWin">
+        <div style="padding:15px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;">
+            <span style="font-weight:700;">Trackler AI</span>
+            <button onclick="App.toggleChat()" style="background:none; border:none; color:#fff; font-size:20px;">&times;</button>
+        </div>
+        <div id="chatMsgs" style="flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;"></div>
+        <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="Meeting @14:00 urgent">
+            <button onclick="App.sendMessage()" style="background:var(--accent); border:none; padding:0 15px; border-radius:8px; color:white; font-weight:700;">Send</button>
+        </div>
+    </div>
+    <button class="fab" onclick="App.toggleChat()">💬</button>
 </div>
 
 <script>
-    const App = (function() {
-        const state = { tasks: [], blocks: [] };
+    const App = (function() {
+        const state = { tasks: [], blocks: [] };
 
-        const render = () => {
-            const list = document.getElementById('task-list');
-            const focus = document.getElementById('focus-area');
-            const timeline = document.getElementById('timeline-v');
-            
-            list.innerHTML = ''; timeline.innerHTML = '';
-            let doneCount = 0; let topTask = "Ready for tasks";
+        const render = () => {
+            const list = document.getElementById('task-list');
+            const timeline = document.getElementById('timeline-v');
+            list.innerHTML = ''; timeline.innerHTML = '';
+            
+            // Render Tasks
+            state.tasks.forEach(t => {
+                const card = document.createElement('div');
+                card.className = `task-card ${t.urgent ? 'urgent-mode' : ''}`;
+                card.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="App.toggleT(${t.id})">
+                        <span style="${t.done ? 'text-decoration:line-through; opacity:0.4' : ''}">${t.text}</span>
+                    </div>
+                    <button onclick="App.deleteT(${t.id})" style="background:none; border:none; color:red; cursor:pointer;">&times;</button>
+                `;
+                list.appendChild(card);
+            });
 
-            // Draw hours in timeline
-            for(let i=6; i<=22; i++) {
-                const s = document.createElement('div'); s.className = 't-slot';
-                s.setAttribute('data-time', i + ':00'); timeline.appendChild(s);
-            }
+            // Render Timeline
+            for(let i=6; i<=22; i++) {
+                const s = document.createElement('div'); s.className = 't-slot';
+                s.setAttribute('data-time', i + ':00'); timeline.appendChild(s);
+            }
+            state.blocks.forEach(b => {
+                const t = state.tasks.find(x => x.id === b.taskId);
+                if(t) {
+                    const bl = document.createElement('div');
+                    bl.style = `position:absolute; top:${(b.start-6)*70}px; left:0; right:0; background:var(--accent); border-radius:10px; padding:12px; font-size:12px; font-weight:700; z-index:10;`;
+                    bl.innerText = t.text;
+                    timeline.appendChild(bl);
+                }
+            });
+        };
 
-            state.tasks.forEach(t => {
-                if(t.done) doneCount++;
-                if(t.urgent && !t.done) topTask = t.text;
-                const el = document.createElement('div');
-                el.className = `task-card ${t.urgent ? 'priority' : ''}`;
-                el.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <input type="checkbox" ${t.done?'checked':''} onchange="App.toggleT(${t.id})">
-                        <span style="${t.done?'text-decoration:line-through;opacity:0.4':''}">${t.text}</span>
-                    </div>
-                    <button onclick="App.deleteT(${t.id})" style="background:none;border:none;color:red;cursor:pointer;">&times;</button>
-                `;
-                list.appendChild(el);
-            });
-
-            state.blocks.forEach(b => {
-                const t = state.tasks.find(x => x.id === b.taskId);
-                if(t) {
-                    const block = document.createElement('div');
-                    block.style = `position:absolute; top:${(b.start-6)*70}px; left:0; right:0; background:var(--accent); border-radius:12px; padding:12px; font-size:12px; font-weight:700; z-index:10;`;
-                    block.innerText = t.text;
-                    timeline.appendChild(block);
-                }
-            });
-
-            const pct = state.tasks.length ? Math.round((doneCount/state.tasks.length)*100) : 0;
-            document.getElementById('prog-val').innerText = pct + '%';
-            document.getElementById('prog-fill').style.width = pct + '%';
-            focus.innerText = topTask;
-        };
-
-        return {
-            toggleChat: () => document.getElementById('chatWin').classList.toggle('open'),
-            toggleT: (id) => { const t = state.tasks.find(x=>x.id===id); if(t) t.done = !t.done; render(); },
-            deleteT: (id) => { state.tasks = state.tasks.filter(x=>x.id!==id); state.blocks = state.blocks.filter(b=>b.taskId!==id); render(); },
-            sendMessage: () => {
-                const inp = document.getElementById('chatInput');
-                const val = inp.value; if(!val) return;
-                
-                // Advanced Cleaner: Detects @14:00, @14, at 14:00 and priority keywords
-                const urgent = /urgent|asap/i.test(val);
-                const timeMatch = val.match(/@\d{1,2}(:\d{2})?|at\s\d{1,2}(:\d{2})?/i);
-                
-                let cleanName = val;
-                let startHour = null;
-
-                if (timeMatch) {
-                    // Extract digits from the match to find the hour
-                    const hourMatch = timeMatch[0].match(/\d{1,2}/);
-                    if (hourMatch) startHour = parseInt(hourMatch[0]);
-                    // Strip the time part from the task name
-                    cleanName = cleanName.replace(timeMatch[0], '');
-                }
-                
-                // Final clean: remove "urgent" and multiple spaces
-                cleanName = cleanName.replace(/urgent|asap/gi, '').trim();
-
-                const id = Date.now();
-                state.tasks.push({ id, text: cleanName, done: false, urgent });
-                if(startHour !== null) state.blocks.push({ taskId: id, start: startHour });
-                
-                render(); inp.value = '';
-                document.getElementById('chatMsgs').innerHTML += `<div class="bubble user">${val}</div>`;
-                document.getElementById('chatMsgs').scrollTop = 9999;
-            },
-            openSummary: () => {
-                const done = state.tasks.filter(t => t.done).length;
-                document.getElementById('count-done').innerText = done;
-                document.getElementById('count-pending').innerText = state.tasks.length - done;
-                document.getElementById('summaryModal').classList.add('open');
-            },
-            closeSummary: () => document.getElementById('summaryModal').classList.remove('open'),
-            init: () => {
-                // Attach Event Listeners properly
-                document.getElementById('daySummaryBtn').onclick = App.openSummary;
-                document.getElementById('closeSummaryBtn').onclick = App.closeSummary;
-                document.getElementById('fabBtn').onclick = App.toggleChat;
-                document.getElementById('closeChatBtn').onclick = App.toggleChat;
-                document.getElementById('sendMessageBtn').onclick = App.sendMessage;
-                
-                setInterval(() => {
-                    const n = new Date();
-                    document.getElementById('second-hand').style.transform = `translateX(-50%) rotate(${n.getSeconds()*6}deg)`;
-                    document.getElementById('minute-hand').style.transform = `translateX(-50%) rotate(${n.getMinutes()*6}deg)`;
-                    document.getElementById('hour-hand').style.transform = `translateX(-50%) rotate(${n.getHours()*30 + n.getMinutes()*0.5}deg)`;
-                    document.getElementById('digital-time').innerText = n.toLocaleTimeString();
-                    document.getElementById('date-label').innerText = n.toDateString();
-                }, 1000);
-                render();
-            }
-        };
-    })();
-    document.addEventListener('DOMContentLoaded', App.init);
+        return {
+            toggleChat: () => document.getElementById('chatWin').classList.toggle('open'),
+            toggleT: (id) => { const t = state.tasks.find(x=>x.id===id); if(t) t.done = !t.done; render(); },
+            deleteT: (id) => { state.tasks = state.tasks.filter(x=>x.id!==id); state.blocks = state.blocks.filter(b=>b.taskId!==id); render(); },
+            sendMessage: () => {
+                const inp = document.getElementById('chatInput');
+                const val = inp.value; if(!val) return;
+                const urgent = /urgent/i.test(val);
+                const timeMatch = val.match(/@(\d+)/);
+                const name = val.replace(/urgent|@\d+/gi, '').trim();
+                const id = Date.now();
+                state.tasks.push({ id, text: name, done: false, urgent });
+                if(timeMatch) state.blocks.push({ taskId: id, start: parseInt(timeMatch[1]) });
+                render(); inp.value = '';
+            },
+            init: () => {
+                setInterval(() => {
+                    const n = new Date();
+                    document.getElementById('hour-hand').style.transform = `translateX(-50%) rotate(${n.getHours()*30 + n.getMinutes()*0.5}deg)`;
+                    document.getElementById('minute-hand').style.transform = `translateX(-50%) rotate(${n.getMinutes()*6}deg)`;
+                    document.getElementById('second-hand').style.transform = `translateX(-50%) rotate(${n.getSeconds()*6}deg)`;
+                    document.getElementById('digital-time').innerText = n.toLocaleTimeString();
+                    document.getElementById('date-label').innerText = n.toDateString();
+                }, 1000);
+                render();
+            }
+        };
+    })();
+    document.addEventListener('DOMContentLoaded', App.init);
 </script>
 </body>
 </html>
+
+
+Show the preview of this
