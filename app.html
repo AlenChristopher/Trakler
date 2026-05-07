@@ -1,174 +1,530 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trackler AI | Classic Master</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --accent: #9333ea; --bg: #070709; --card: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.1); }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; overflow-x: hidden; }
-        
-        /* 1. SINGLE COLUMN LAYOUT (STACKED) */
-        .app-container { display: flex; flex-direction: column; min-height: 100vh; padding: 20px; gap: 24px; max-width: 800px; margin: 0 auto; box-sizing: border-box; }
-
-        /* 2. REVERTED BRANDING (Purple Square) */
-        .brand-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-        .logo-square { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 18px; }
-        .brand-name { font-size: 20px; font-weight: 700; }
-
-        /* 3. CLASSY ANALOG CLOCK */
-        .clock-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 24px; text-align: center; }
-        .analog-clock { width: 100px; height: 100px; border: 2px solid var(--border); border-radius: 50%; position: relative; margin: 0 auto 15px; }
-        .hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; transform: translateX(-50%); border-radius: 5px; }
-        .hour { width: 4px; height: 25px; background: #fff; z-index: 3; }
-        .minute { width: 3px; height: 38px; background: #aaa; z-index: 2; }
-        .second { width: 2px; height: 42px; background: var(--accent); z-index: 1; }
-        .center-dot { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); z-index: 4; }
-        .date-display { color: var(--accent); font-weight: 600; margin-bottom: 5px; }
-
-        /* 4. MODERN BUTTONS */
-        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .modern-btn { background: var(--accent); border: none; padding: 14px; border-radius: 14px; color: white; font-weight: 700; cursor: pointer; transition: 0.3s; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); }
-
-        /* 5. TASK AREA (MAXIMIZED) */
-        .tasks-section { flex: 1; }
-        .task-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 18px; border-radius: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .task-card.urgent-mode { border-left: 5px solid var(--accent); background: rgba(147, 51, 234, 0.05); }
-
-        /* 6. TIMELINE (MOVED TO BOTTOM) */
-        .timeline-section { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; height: 500px; overflow-y: auto; position: relative; }
-        .t-slot { height: 70px; border-bottom: 1px solid rgba(255,255,255,0.02); position: relative; }
-        .t-slot::after { content: attr(data-time); position: absolute; left: 0; top: -12px; font-size: 11px; color: #555; }
-
-        /* CHATBOT (FIXED) */
-        .bot-anchor { position: fixed; bottom: 25px; right: 25px; z-index: 9999; }
-        .fab { width: 60px; height: 60px; border-radius: 50%; background: var(--accent); border: none; font-size: 26px; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-        .chat-win { position: absolute; bottom: 75px; right: 0; width: 320px; height: 450px; background: #0f1016; border: 1px solid var(--border); border-radius: 24px; display: none; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
-        .chat-win.open { display: flex; }
-        .chat-input { padding: 12px; display: flex; gap: 8px; background: rgba(0,0,0,0.2); }
-        .chat-input input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: #fff; outline: none; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Trackler AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--surface:#111118;--card:#16161f;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#6d28d9;--accent-l:#7c3aed;--text:#e8e8f0;--muted:rgba(232,232,240,0.4);--muted2:rgba(232,232,240,0.65);--success:#059669;--danger:#dc2626;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;}
+.shell{display:grid;grid-template-columns:240px 1fr 300px;height:100vh;gap:0;}
+.sidebar{border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 16px;gap:16px;overflow:hidden;}
+.brand{display:flex;align-items:center;gap:9px;padding-bottom:4px;}
+.brand-icon{width:28px;height:28px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;color:#fff;font-weight:600;}
+.brand-name{font-weight:600;font-size:15px;letter-spacing:-0.3px;}
+.clock-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.analog{width:88px;height:88px;border-radius:50%;border:1px solid var(--border2);position:relative;}
+.analog::after{content:'';position:absolute;width:5px;height:5px;background:var(--accent-l);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;}
+.tick{position:absolute;width:1px;top:6px;left:50%;transform-origin:bottom center;transform:translateX(-50%);background:var(--border);}
+.tick.major{height:7px;background:var(--border2);width:1.5px;}
+.hand{position:absolute;bottom:50%;left:50%;transform-origin:bottom;border-radius:2px;transform:translateX(-50%);}
+.hh{width:3px;height:22px;background:var(--text);z-index:3;}
+.hm{width:2px;height:33px;background:var(--muted2);z-index:2;}
+.hs{width:1px;height:38px;background:var(--accent-l);z-index:4;}
+.dtime{font-size:18px;font-weight:500;letter-spacing:1.5px;font-variant-numeric:tabular-nums;}
+.ddate{font-size:11px;color:var(--muted);letter-spacing:0.3px;}
+.sb-btn{display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--muted2);font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;text-align:left;}
+.sb-btn:hover{background:var(--surface);color:var(--text);border-color:var(--border2);}
+.sb-btn.active{background:rgba(109,40,217,0.15);border-color:rgba(109,40,217,0.3);color:var(--text);}
+.sb-btn .pill{margin-left:auto;background:rgba(255,255,255,0.08);border-radius:10px;padding:1px 7px;font-size:11px;color:var(--muted2);}
+.hint-block{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);}
+.hint-line{color:var(--muted);font-size:11px;line-height:2;}
+.main{display:flex;flex-direction:column;overflow:hidden;}
+.top-bar{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+.metric{padding:16px 20px;border-right:1px solid var(--border);}
+.metric:last-child{border-right:none;}
+.metric-lbl{font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;}
+.metric-val{font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.metric-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.prog-track{height:3px;background:rgba(255,255,255,0.06);border-radius:2px;margin-top:8px;}
+.prog-fill{height:100%;background:var(--accent-l);border-radius:2px;width:0%;transition:width .6s ease;}
+.tasks-area{flex:1;overflow-y:auto;padding:0;}
+.tasks-area::-webkit-scrollbar{width:4px;}
+.tasks-area::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.section-head{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 10px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--border);}
+.section-title{font-weight:500;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;}
+.t-card{display:flex;align-items:center;gap:10px;padding:11px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;user-select:none;}
+.t-card:hover{background:var(--surface);}
+.t-card.dragging{opacity:.35;}
+.t-card.urgent{border-left:2px solid rgba(124,58,237,0.7);}
+.cb{width:15px;height:15px;border:1.5px solid var(--border2);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;cursor:pointer;}
+.cb.done{background:var(--success);border-color:var(--success);}
+.cb.done::after{content:'';width:7px;height:4px;border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(-45deg) translateY(-1px);}
+.t-info{flex:1;min-width:0;}
+.t-name{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t-name.done{text-decoration:line-through;color:var(--muted);}
+.t-tags{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap;}
+.tag{font-size:10px;padding:1px 6px;border-radius:3px;}
+.tag.u{background:rgba(109,40,217,0.18);color:#a78bfa;}
+.tag.t{background:rgba(255,255,255,0.05);color:var(--muted2);}
+.tag.d{background:rgba(255,255,255,0.03);color:var(--muted);}
+.drag-handle{color:var(--muted);font-size:13px;cursor:grab;flex-shrink:0;opacity:0;transition:opacity .1s;line-height:1;}
+.t-card:hover .drag-handle{opacity:1;}
+.empty{padding:40px 20px;text-align:center;color:var(--muted);}
+.timeline{border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.tl-head{padding:14px 16px 11px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.tl-title{font-weight:500;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;}
+.tl-scroll{flex:1;overflow-y:auto;position:relative;padding:0 10px;}
+.tl-scroll::-webkit-scrollbar{width:4px;}
+.tl-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.tl-inner{position:relative;}
+.tl-slot{height:60px;display:flex;align-items:flex-start;gap:8px;border-bottom:1px solid rgba(255,255,255,0.025);}
+.tl-lbl{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;padding-top:2px;width:26px;flex-shrink:0;}
+#tl-blocks{position:absolute;left:40px;right:0;top:0;pointer-events:none;}
+.tl-block{position:absolute;left:0;right:3px;border-radius:6px;padding:6px 8px;font-size:11px;font-weight:500;color:#fff;background:var(--accent);border:1px solid rgba(255,255,255,0.08);overflow:hidden;cursor:pointer;pointer-events:all;min-height:24px;}
+.tl-block.done{opacity:.3;text-decoration:line-through;}
+.tl-block-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;}
+.tl-block-time{font-size:10px;opacity:.65;margin-top:2px;}
+.drop-hi{background:rgba(109,40,217,0.07);border-bottom:1px solid rgba(109,40,217,0.25);}
+.now-line{position:absolute;left:0;right:0;height:1px;background:var(--accent-l);pointer-events:none;z-index:20;}
+.now-line::before{content:'';position:absolute;left:-1px;top:-3px;width:6px;height:6px;background:var(--accent-l);border-radius:50%;}
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;display:none;}
+.drawer-overlay.open{display:block;}
+.drawer{position:fixed;right:0;top:0;bottom:0;width:360px;background:var(--card);border-left:1px solid var(--border);z-index:201;transform:translateX(100%);transition:transform .2s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;}
+.drawer.open{transform:none;}
+.drawer-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.drawer-title{font-size:13px;font-weight:600;}
+.drawer-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;padding:2px 6px;border-radius:4px;}
+.drawer-close:hover{color:var(--text);background:var(--surface);}
+.drawer-body{flex:1;overflow-y:auto;padding:20px;}
+.drawer-body::-webkit-scrollbar{width:3px;}
+.drawer-body::-webkit-scrollbar-thumb{background:var(--border2);}
+.field{margin-bottom:18px;}
+.field-label{font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+.field input,.field select,.field textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:9px 11px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .15s;resize:none;-webkit-appearance:none;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(124,58,237,0.6);}
+.field select option{background:var(--card);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.prio-row{display:flex;gap:6px;}
+.prio-btn{flex:1;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--muted2);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;transition:all .12s;text-align:center;}
+.prio-btn:hover{border-color:var(--border2);color:var(--text);}
+.prio-btn.sel{background:rgba(109,40,217,0.2);border-color:rgba(109,40,217,0.4);color:#c4b5fd;}
+.drawer-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;}
+.btn-primary{flex:1;padding:10px;border-radius:7px;background:var(--accent);border:none;color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s;}
+.btn-primary:hover{opacity:.85;}
+.btn-danger{padding:10px 14px;border-radius:7px;background:transparent;border:1px solid rgba(220,38,38,.25);color:var(--danger);font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;}
+.btn-danger:hover{background:rgba(220,38,38,.07);}
+.chat-anchor{position:fixed;bottom:20px;right:20px;z-index:150;}
+.fab{width:50px;height:50px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(109,40,217,.4);color:#fff;font-size:18px;transition:transform .15s;}
+.fab:hover{transform:scale(1.07);}
+.chat-win{position:absolute;bottom:62px;right:0;width:310px;height:440px;background:var(--card);border:1px solid var(--border2);border-radius:14px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.65);}
+.chat-win.open{display:flex;}
+.chat-hd{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;}
+.chat-av{width:26px;height:26px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:600;}
+.chat-hd-info .name{font-weight:500;font-size:13px;}
+.chat-hd-info .status{font-size:10px;color:var(--success);}
+.chat-x{margin-left:auto;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:2px 5px;}
+.chat-bd{flex:1;padding:12px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+.chat-bd::-webkit-scrollbar{width:3px;}
+.chat-bd::-webkit-scrollbar-thumb{background:var(--border2);}
+.bbl{padding:8px 11px;border-radius:10px;font-size:12px;max-width:90%;line-height:1.5;}
+.bbl.ai{background:var(--surface);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:2px;color:var(--muted2);}
+.bbl.user{background:var(--accent);align-self:flex-end;border-bottom-right-radius:2px;color:#fff;}
+.chat-ft{padding:9px;display:flex;gap:6px;border-top:1px solid var(--border);}
+.chat-inp{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;outline:none;}
+.chat-inp:focus{border-color:rgba(124,58,237,0.5);}
+.chat-inp::placeholder{color:var(--muted);}
+.chat-send{background:var(--accent);border:none;padding:0 13px;border-radius:7px;color:#fff;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;display:none;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal-box{background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:24px;width:300px;}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:3px;}
+.modal-sub{font-size:11px;color:var(--muted);margin-bottom:18px;}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;}
+.stat-cell{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.stat-n{font-size:26px;font-weight:600;}
+.stat-n.g{color:#34d399;}.stat-n.p{color:#a78bfa;}
+.mbar-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px;}
+.mbar{height:4px;background:rgba(255,255,255,.06);border-radius:2px;margin-bottom:18px;}
+.mbar-fill{height:100%;background:var(--accent-l);border-radius:2px;transition:width .5s;}
+.m-close{width:100%;padding:9px;border-radius:7px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;}
+.m-close:hover{border-color:var(--border2);}
+</style>
 </head>
 <body>
+<div class="shell">
 
-<div class="app-container">
-    <div class="brand-header">
-        <div class="logo-square">T</div>
-        <span class="brand-name">Trackler</span>
-    </div>
+<nav class="sidebar">
+  <div class="brand">
+    <img src="Trackler.png" alt="T" class="brand-icon">
+    <span class="brand-name">Trackler</span>
+  </div>
+  <div class="clock-block">
+    <div class="analog" id="aClock">
+      <div class="hand hh" id="hH"></div>
+      <div class="hand hm" id="hM"></div>
+      <div class="hand hs" id="hS"></div>
+    </div>
+    <div class="dtime" id="dTime">00:00:00</div>
+    <div class="ddate" id="dDate">—</div>
+  </div>
+  <button class="sb-btn active">Today <span class="pill" id="cntPill">0</span></button>
+  <button class="sb-btn" id="summaryBtn">Day Summary</button>
+  <div class="hint-block">
+    <div class="hint-line">💬 "Meeting @14:00 urgent"</div>
+    <div class="hint-line">↕ Drag task card → timeline</div>
+    <div class="hint-line">Click any task to edit details</div>
+  </div>
+</nav>
 
-    <div class="clock-card">
-        <div class="analog-clock">
-            <div class="hand hour" id="hour-hand"></div>
-            <div class="hand minute" id="minute-hand"></div>
-            <div class="hand second" id="second-hand"></div>
-            <div class="center-dot"></div>
-        </div>
-        <div id="date-label" class="date-display"></div>
-        <div id="digital-time" style="opacity:0.5; font-family:monospace;"></div>
-    </div>
+<main class="main">
+  <div class="top-bar">
+    <div class="metric">
+      <div class="metric-lbl">Top focus</div>
+      <div class="metric-val" id="focusName">Ready for tasks</div>
+      <div class="metric-sub" id="focusMeta">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-lbl">Progress</div>
+      <div class="metric-val" id="progTxt">0 of 0 done</div>
+      <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    </div>
+  </div>
+  <div class="section-head">
+    <span class="section-title">Tasks</span>
+    <span id="taskSub" style="font-size:11px;color:var(--muted);">0 tasks</span>
+  </div>
+  <div class="tasks-area" id="taskList"></div>
+</main>
 
-    <div class="btn-row">
-        <button class="modern-btn">Today</button>
-        <button class="modern-btn btn-outline" onclick="App.openSummary()">📊 Day Summary</button>
-    </div>
-
-    <div class="tasks-section">
-        <h3 style="margin-top:0;">Your Tasks</h3>
-        <div id="task-list"></div>
-    </div>
-
-    <div class="timeline-section">
-        <h3 style="margin-top:0;">Timeline</h3>
-        <div id="timeline-v" style="position:relative; height:1200px;"></div>
-    </div>
+<aside class="timeline">
+  <div class="tl-head">
+    <span class="tl-title">Timeline</span>
+    <span style="font-size:10px;color:var(--muted);">drag tasks here</span>
+  </div>
+  <div class="tl-scroll" id="tlScroll">
+    <div class="tl-inner" id="tlInner">
+      <div id="tlSlots"></div>
+      <div id="tl-blocks"></div>
+    </div>
+  </div>
+</aside>
 </div>
 
-<div class="bot-anchor">
-    <div class="chat-win" id="chatWin">
-        <div style="padding:15px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;">
-            <span style="font-weight:700;">Trackler AI</span>
-            <button onclick="App.toggleChat()" style="background:none; border:none; color:#fff; font-size:20px;">&times;</button>
-        </div>
-        <div id="chatMsgs" style="flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;"></div>
-        <div class="chat-input">
-            <input type="text" id="chatInput" placeholder="Meeting @14:00 urgent">
-            <button onclick="App.sendMessage()" style="background:var(--accent); border:none; padding:0 15px; border-radius:8px; color:white; font-weight:700;">Send</button>
-        </div>
-    </div>
-    <button class="fab" onclick="App.toggleChat()">💬</button>
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <span class="drawer-title">Task details</span>
+    <button class="drawer-close" id="drawerClose">×</button>
+  </div>
+  <div class="drawer-body">
+    <div class="field">
+      <div class="field-label">Name</div>
+      <input type="text" id="dName" placeholder="Task name">
+    </div>
+    <div class="field">
+      <div class="field-label">Notes</div>
+      <textarea id="dNotes" rows="3" placeholder="Optional notes…"></textarea>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <div class="field-label">Start time</div>
+        <select id="dStart"></select>
+      </div>
+      <div class="field">
+        <div class="field-label">Duration</div>
+        <select id="dDur">
+          <option value="0.5">30 min</option>
+          <option value="1" selected>1 hour</option>
+          <option value="1.5">1.5 hrs</option>
+          <option value="2">2 hrs</option>
+          <option value="2.5">2.5 hrs</option>
+          <option value="3">3 hrs</option>
+          <option value="4">4 hrs</option>
+          <option value="6">6 hrs</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">Priority</div>
+      <div class="prio-row">
+        <button class="prio-btn sel" id="pNorm" onclick="App.setPrio(false)">Normal</button>
+        <button class="prio-btn" id="pUrg" onclick="App.setPrio(true)">Urgent</button>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn-primary" id="drawerSave">Save</button>
+    <button class="btn-danger" id="drawerDel">Delete</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="summaryModal">
+  <div class="modal-box">
+    <div class="modal-title">Day summary</div>
+    <div class="modal-sub" id="mDate">—</div>
+    <div class="stat-row">
+      <div class="stat-cell"><div class="stat-lbl">Done</div><div class="stat-n g" id="mDone">0</div></div>
+      <div class="stat-cell"><div class="stat-lbl">Pending</div><div class="stat-n p" id="mPend">0</div></div>
+    </div>
+    <div class="mbar-lbl"><span>Completion rate</span><span id="mRate">0%</span></div>
+    <div class="mbar"><div class="mbar-fill" id="mBarFill"></div></div>
+    <button class="m-close" id="mClose">Close</button>
+  </div>
+</div>
+
+<div class="chat-anchor">
+  <div class="chat-win" id="chatWin">
+    <div class="chat-hd">
+      <div class="chat-av">T</div>
+      <div class="chat-hd-info">
+        <div class="name">Trackler AI</div>
+        <div class="status">● Active</div>
+      </div>
+      <button class="chat-x" id="chatX">×</button>
+    </div>
+    <div class="chat-bd" id="chatBd">
+      <div class="bbl ai">Hi! Add tasks naturally.<br><br>Try: <strong>"Standup @09:00 urgent"</strong><br>Or just "Review docs" — drag it to the timeline later.</div>
+    </div>
+    <div class="chat-ft">
+      <input class="chat-inp" id="chatInp" type="text" placeholder="Add a task…" autocomplete="off">
+      <button class="chat-send" id="chatSend">Send</button>
+    </div>
+  </div>
+  <button class="fab" id="fabBtn">✦</button>
 </div>
 
 <script>
-    const App = (function() {
-        const state = { tasks: [], blocks: [] };
+const App = (() => {
+  const SLOT_H=60, START_H=6, END_H=22;
+  let state={tasks:[],nextId:1};
+  let editId=null, dragId=null;
 
-        const render = () => {
-            const list = document.getElementById('task-list');
-            const timeline = document.getElementById('timeline-v');
-            list.innerHTML = ''; timeline.innerHTML = '';
-            
-            // Render Tasks
-            state.tasks.forEach(t => {
-                const card = document.createElement('div');
-                card.className = `task-card ${t.urgent ? 'urgent-mode' : ''}`;
-                card.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="App.toggleT(${t.id})">
-                        <span style="${t.done ? 'text-decoration:line-through; opacity:0.4' : ''}">${t.text}</span>
-                    </div>
-                    <button onclick="App.deleteT(${t.id})" style="background:none; border:none; color:red; cursor:pointer;">&times;</button>
-                `;
-                list.appendChild(card);
-            });
+  const save=()=>{try{localStorage.setItem('trkl2',JSON.stringify(state));}catch(e){}};
+  const load=()=>{try{const d=localStorage.getItem('trkl2');if(d)state=JSON.parse(d);}catch(e){}};
 
-            // Render Timeline
-            for(let i=6; i<=22; i++) {
-                const s = document.createElement('div'); s.className = 't-slot';
-                s.setAttribute('data-time', i + ':00'); timeline.appendChild(s);
-            }
-            state.blocks.forEach(b => {
-                const t = state.tasks.find(x => x.id === b.taskId);
-                if(t) {
-                    const bl = document.createElement('div');
-                    bl.style = `position:absolute; top:${(b.start-6)*70}px; left:0; right:0; background:var(--accent); border-radius:10px; padding:12px; font-size:12px; font-weight:700; z-index:10;`;
-                    bl.innerText = t.text;
-                    timeline.appendChild(bl);
-                }
-            });
-        };
+  let _ctx=null;
+  const beep=()=>{try{if(!_ctx)_ctx=new(window.AudioContext||window.webkitAudioContext)();const o=_ctx.createOscillator(),g=_ctx.createGain();o.connect(g);g.connect(_ctx.destination);o.frequency.setValueAtTime(523,_ctx.currentTime);o.frequency.setValueAtTime(659,_ctx.currentTime+0.1);g.gain.setValueAtTime(0.1,_ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,_ctx.currentTime+0.4);o.start();o.stop(_ctx.currentTime+0.4);}catch(e){}};
 
-        return {
-            toggleChat: () => document.getElementById('chatWin').classList.toggle('open'),
-            toggleT: (id) => { const t = state.tasks.find(x=>x.id===id); if(t) t.done = !t.done; render(); },
-            deleteT: (id) => { state.tasks = state.tasks.filter(x=>x.id!==id); state.blocks = state.blocks.filter(b=>b.taskId!==id); render(); },
-            sendMessage: () => {
-                const inp = document.getElementById('chatInput');
-                const val = inp.value; if(!val) return;
-                const urgent = /urgent/i.test(val);
-                const timeMatch = val.match(/@(\d+)/);
-                const name = val.replace(/urgent|@\d+/gi, '').trim();
-                const id = Date.now();
-                state.tasks.push({ id, text: name, done: false, urgent });
-                if(timeMatch) state.blocks.push({ taskId: id, start: parseInt(timeMatch[1]) });
-                render(); inp.value = '';
-            },
-            init: () => {
-                setInterval(() => {
-                    const n = new Date();
-                    document.getElementById('hour-hand').style.transform = `translateX(-50%) rotate(${n.getHours()*30 + n.getMinutes()*0.5}deg)`;
-                    document.getElementById('minute-hand').style.transform = `translateX(-50%) rotate(${n.getMinutes()*6}deg)`;
-                    document.getElementById('second-hand').style.transform = `translateX(-50%) rotate(${n.getSeconds()*6}deg)`;
-                    document.getElementById('digital-time').innerText = n.toLocaleTimeString();
-                    document.getElementById('date-label').innerText = n.toDateString();
-                }, 1000);
-                render();
-            }
-        };
-    })();
-    document.addEventListener('DOMContentLoaded', App.init);
+  const parse=(raw)=>{
+    let text=raw.trim();
+    const urgent=/\b(urgent|asap|critical)\b/i.test(text);
+    const m=text.match(/@(\d{1,2})(?::(\d{2}))?|(?:\bat\s)(\d{1,2})(?::(\d{2}))?/i);
+    let hour=null;
+    if(m){hour=parseInt(m[1]||m[3]);text=text.replace(m[0],'');}
+    text=text.replace(/\b(urgent|asap|critical)\b/gi,'').replace(/\s{2,}/g,' ').trim();
+    if(!text)text='Untitled';
+    return{text,urgent,hour};
+  };
+
+  const buildTicks=()=>{
+    const cl=document.getElementById('aClock');
+    for(let i=0;i<60;i++){const t=document.createElement('div');t.className='tick'+(i%5===0?' major':'');t.style.transform=`translateX(-50%) rotate(${i*6}deg)`;cl.appendChild(t);}
+  };
+
+  const tickClock=()=>{
+    const n=new Date(),s=n.getSeconds(),m=n.getMinutes(),h=n.getHours();
+    document.getElementById('hS').style.transform=`translateX(-50%) rotate(${s*6}deg)`;
+    document.getElementById('hM').style.transform=`translateX(-50%) rotate(${m*6+s*.1}deg)`;
+    document.getElementById('hH').style.transform=`translateX(-50%) rotate(${h*30+m*.5}deg)`;
+    document.getElementById('dTime').textContent=n.toLocaleTimeString('sv-SE');
+    document.getElementById('dDate').textContent=n.toLocaleDateString('en-SE',{weekday:'short',month:'short',day:'numeric'});
+    updateNowLine();
+  };
+
+  const updateNowLine=()=>{
+    const n=new Date(),min=(n.getHours()-START_H)*60+n.getMinutes();
+    if(min<0||min>(END_H-START_H)*60)return;
+    let el=document.getElementById('nowLine');
+    if(!el){el=document.createElement('div');el.id='nowLine';el.className='now-line';document.getElementById('tl-blocks').appendChild(el);}
+    el.style.top=(min/60*SLOT_H)+'px';
+  };
+
+  const buildSlots=()=>{
+    const wrap=document.getElementById('tlSlots');
+    const inner=document.getElementById('tlInner');
+    inner.style.cssText='position:relative;min-height:'+((END_H-START_H)*SLOT_H)+'px;';
+    document.getElementById('tl-blocks').style.cssText='position:absolute;left:40px;right:0;top:0;pointer-events:none;';
+    for(let h=START_H;h<=END_H;h++){
+      const slot=document.createElement('div');
+      slot.className='tl-slot';slot.dataset.hour=h;
+      slot.innerHTML=`<span class="tl-lbl">${String(h).padStart(2,'0')}</span>`;
+      slot.addEventListener('dragover',e=>{e.preventDefault();slot.classList.add('drop-hi');});
+      slot.addEventListener('dragleave',()=>slot.classList.remove('drop-hi'));
+      slot.addEventListener('drop',e=>{
+        e.preventDefault();slot.classList.remove('drop-hi');
+        if(dragId==null)return;
+        const t=state.tasks.find(x=>x.id===dragId);
+        if(t){t.hour=parseInt(slot.dataset.hour);render();}
+      });
+      wrap.appendChild(slot);
+    }
+  };
+
+  const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const render=()=>{
+    const list=document.getElementById('taskList');
+    const blks=document.getElementById('tl-blocks');
+    list.innerHTML='';
+    blks.querySelectorAll('.tl-block').forEach(b=>b.remove());
+
+    const done=state.tasks.filter(t=>t.done).length;
+    const total=state.tasks.length;
+    const pct=total?Math.round(done/total*100):0;
+    const urgPend=state.tasks.filter(t=>t.urgent&&!t.done);
+
+    document.getElementById('progTxt').textContent=`${done} of ${total} done`;
+    document.getElementById('progFill').style.width=pct+'%';
+    document.getElementById('cntPill').textContent=total;
+    document.getElementById('taskSub').textContent=total+(total===1?' task':' tasks');
+
+    if(urgPend.length){
+      document.getElementById('focusName').textContent=urgPend[0].text;
+      document.getElementById('focusMeta').textContent=urgPend[0].hour!=null?`Scheduled ${urgPend[0].hour}:00`:'Urgent — unscheduled';
+    }else{
+      const nxt=state.tasks.find(t=>!t.done);
+      document.getElementById('focusName').textContent=nxt?nxt.text:(total?'All done':'Ready for tasks');
+      document.getElementById('focusMeta').textContent=nxt?'Next up':'—';
+    }
+
+    if(!total){list.innerHTML='<div class="empty" style="font-size:12px;color:var(--muted);padding:32px 20px;">No tasks yet. Use the chat to add one.</div>';return;}
+
+    state.tasks.forEach(t=>{
+      const el=document.createElement('div');
+      el.className='t-card'+(t.urgent?' urgent':'');
+      el.dataset.id=t.id;el.draggable=true;
+      el.innerHTML=`<span class="drag-handle" title="Drag to timeline">⠿</span>
+        <div class="cb ${t.done?'done':''}" data-cb="${t.id}"></div>
+        <div class="t-info">
+          <div class="t-name ${t.done?'done':''}">${esc(t.text)}</div>
+          <div class="t-tags">
+            ${t.urgent?'<span class="tag u">Urgent</span>':''}
+            ${t.hour!=null?`<span class="tag t">${t.hour}:00</span>`:'<span class="tag d">Unscheduled</span>'}
+            ${t.dur&&t.dur!=1?`<span class="tag d">${t.dur}h</span>`:''}
+          </div>
+        </div>`;
+      el.querySelector('[data-cb]').addEventListener('click',e=>{e.stopPropagation();toggle(t.id);});
+      el.addEventListener('click',()=>openDrawer(t.id));
+      el.addEventListener('dragstart',e=>{dragId=t.id;e.dataTransfer.effectAllowed='move';setTimeout(()=>el.classList.add('dragging'),0);});
+      el.addEventListener('dragend',()=>{dragId=null;el.classList.remove('dragging');});
+      list.appendChild(el);
+
+      if(t.hour!=null){
+        const dur=t.dur||1;
+        const blk=document.createElement('div');
+        blk.className='tl-block'+(t.done?' done':'');
+        blk.style.top=((t.hour-START_H)*SLOT_H+2)+'px';
+        blk.style.height=Math.max(22,(dur*SLOT_H-4))+'px';
+        blk.innerHTML=`<div class="tl-block-name">${esc(t.text)}</div><div class="tl-block-time">${t.hour}:00 · ${dur<1?Math.round(dur*60)+'m':dur+'h'}</div>`;
+        blk.addEventListener('click',()=>openDrawer(t.id));
+        blks.appendChild(blk);
+      }
+    });
+    save();
+  };
+
+  const toggle=(id)=>{
+    const t=state.tasks.find(x=>x.id===id);if(!t)return;
+    t.done=!t.done;if(t.done)beep();render();
+  };
+
+  const fillStartSelect=(sel,val)=>{
+    sel.innerHTML='<option value="">No time</option>';
+    for(let h=START_H;h<=END_H;h++){
+      const o=document.createElement('option');
+      o.value=h;o.textContent=`${String(h).padStart(2,'0')}:00`;
+      if(h===val)o.selected=true;
+      sel.appendChild(o);
+    }
+  };
+
+  const openDrawer=(id)=>{
+    editId=id;
+    const t=state.tasks.find(x=>x.id===id);if(!t)return;
+    document.getElementById('dName').value=t.text;
+    document.getElementById('dNotes').value=t.notes||'';
+    fillStartSelect(document.getElementById('dStart'),t.hour);
+    document.getElementById('dDur').value=String(t.dur||1);
+    setPrio(!!t.urgent,false);
+    document.getElementById('drawerOverlay').classList.add('open');
+    document.getElementById('drawer').classList.add('open');
+    setTimeout(()=>document.getElementById('dName').focus(),220);
+  };
+
+  const closeDrawer=()=>{editId=null;document.getElementById('drawerOverlay').classList.remove('open');document.getElementById('drawer').classList.remove('open');};
+
+  const saveDrawer=()=>{
+    if(editId==null)return;
+    const t=state.tasks.find(x=>x.id===editId);if(!t)return;
+    const n=document.getElementById('dName').value.trim();if(n)t.text=n;
+    t.notes=document.getElementById('dNotes').value.trim();
+    const sv=document.getElementById('dStart').value;
+    t.hour=sv===''?null:parseInt(sv);
+    t.dur=parseFloat(document.getElementById('dDur').value);
+    t.urgent=document.getElementById('pUrg').classList.contains('sel');
+    closeDrawer();render();
+  };
+
+  const deleteTask=()=>{
+    if(editId==null)return;
+    state.tasks=state.tasks.filter(x=>x.id!==editId);
+    closeDrawer();render();
+  };
+
+  const setPrio=(isUrg,_update=true)=>{
+    document.getElementById('pNorm').classList.toggle('sel',!isUrg);
+    document.getElementById('pUrg').classList.toggle('sel',isUrg);
+  };
+
+  const addBubble=(txt,role)=>{
+    const bd=document.getElementById('chatBd');
+    const b=document.createElement('div');b.className='bbl '+role;b.innerHTML=txt;
+    bd.appendChild(b);bd.scrollTop=9999;
+  };
+
+  const sendMsg=()=>{
+    const inp=document.getElementById('chatInp');
+    const raw=inp.value.trim();if(!raw)return;
+    addBubble(esc(raw),'user');inp.value='';
+    const{text,urgent,hour}=parse(raw);
+    const id=state.nextId++;
+    state.tasks.push({id,text,done:false,urgent,hour,dur:1,notes:''});
+    let rep=`Added <strong>${esc(text)}</strong>`;
+    if(urgent)rep+=' · Urgent';
+    if(hour!=null)rep+=` · ${hour}:00`;
+    else rep+='<br><span style="opacity:.7;font-size:11px;">No time set — drag to timeline or click to edit</span>';
+    setTimeout(()=>addBubble(rep,'ai'),160);
+    render();
+  };
+
+  const openSummary=()=>{
+    const done=state.tasks.filter(t=>t.done).length;
+    const total=state.tasks.length;
+    const pct=total?Math.round(done/total*100):0;
+    document.getElementById('mDone').textContent=done;
+    document.getElementById('mPend').textContent=total-done;
+    document.getElementById('mRate').textContent=pct+'%';
+    document.getElementById('mBarFill').style.width=pct+'%';
+    document.getElementById('mDate').textContent=new Date().toLocaleDateString('en-SE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('summaryModal').classList.add('open');
+  };
+
+  const init=()=>{
+    load();buildTicks();buildSlots();tickClock();setInterval(tickClock,1000);render();
+    fillStartSelect(document.getElementById('dStart'),null);
+    document.getElementById('fabBtn').onclick=()=>document.getElementById('chatWin').classList.toggle('open');
+    document.getElementById('chatX').onclick=()=>document.getElementById('chatWin').classList.remove('open');
+    document.getElementById('chatSend').onclick=sendMsg;
+    document.getElementById('chatInp').onkeydown=e=>{if(e.key==='Enter')sendMsg();};
+    document.getElementById('summaryBtn').onclick=openSummary;
+    document.getElementById('mClose').onclick=()=>document.getElementById('summaryModal').classList.remove('open');
+    document.getElementById('summaryModal').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open');};
+    document.getElementById('drawerOverlay').onclick=closeDrawer;
+    document.getElementById('drawerClose').onclick=closeDrawer;
+    document.getElementById('drawerSave').onclick=saveDrawer;
+    document.getElementById('drawerDel').onclick=deleteTask;
+    const sc=document.getElementById('tlScroll');
+    sc.scrollTop=Math.max(0,(new Date().getHours()-START_H-1)*SLOT_H);
+  };
+
+  return{init,setPrio};
+})();
+document.addEventListener('DOMContentLoaded',App.init);
 </script>
 </body>
 </html>
